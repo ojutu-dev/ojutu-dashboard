@@ -1,16 +1,13 @@
 'use client';
-
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { useContent } from '../../../context/ContentContext';
-
+import axios from 'axios';
 export default function DetailForm() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
-  const { content, addItem, updateItem, deleteItem } = useContent();
   const [formData, setFormData] = useState({
-    id: Date.now(),
+    id: null,
     name: '',
     slug: '',
     image: null,
@@ -18,7 +15,6 @@ export default function DetailForm() {
   const [section, setSection] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
-
   useEffect(() => {
     if (pathname) {
       const pathParts = pathname.split('/');
@@ -26,24 +22,22 @@ export default function DetailForm() {
       setSection(sectionName);
     }
   }, [pathname]);
-
   useEffect(() => {
     if (params.id && section) {
-      const item = content[section]?.find((item) => item.id === parseInt(params.id));
-      if (item) {
+      // Fetch the item data from the API if in edit mode
+      axios.get(`/api/${section}/${params.id}`).then(response => {
+        const item = response.data;
         setFormData(item);
         setImagePreview(item.image);
         setIsEditing(true);
-      }
+      });
     }
-  }, [params.id, section, content]);
-
+  }, [params.id, section]);
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    if (name === 'image') {
+    if (name === 'image' && files) {
       const file = files[0];
       setFormData({ ...formData, image: file });
-
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
@@ -53,54 +47,52 @@ export default function DetailForm() {
       setFormData({ ...formData, [name]: value });
     }
   };
-
   const handleSlugGeneration = () => {
     setFormData({ ...formData, slug: formData.name.toLowerCase().replace(/\s+/g, '-') });
   };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const imageDataUrl = reader.result;
-      const newFormData = { ...formData, image: imageDataUrl };
+    try {
+      const formDataCopy = { ...formData };
+      if (formData.image && formData.image instanceof File) {
+        const imageBase64 = await convertFileToBase64(formData.image);
+        formDataCopy.image = imageBase64;
+      }
       if (isEditing) {
-        updateItem(section, formData.id, newFormData);
+        await axios.put(`/api/${section}/${formData.id}`, formDataCopy);
       } else {
-        addItem(section, newFormData);
+        await axios.post(`/api/${section}`, formDataCopy);
       }
       router.push(`/dashboard/${section}`);
-    };
-    if (formData.image instanceof File) {
-      reader.readAsDataURL(formData.image);
-    } else {
-      if (isEditing) {
-        updateItem(section, formData.id, formData);
-      } else {
-        addItem(section, formData);
-      }
-      router.push(`/dashboard/${section}`);
+    } catch (error) {
+      console.error('Error submitting form:', error);
     }
   };
-
   const handleCancel = () => {
     router.back();
   };
-
-  const handleDelete = () => {
-    deleteItem(section, formData.id);
-    router.push(`/dashboard/${section}`);
+  const handleDelete = async () => {
+    try {
+      await axios.delete(`/api/${section}/${formData.id}`);
+      router.push(`/dashboard/${section}`);
+    } catch (error) {
+      console.error('Error deleting item:', error);
+    }
   };
-
+  const convertFileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
   return (
     <form onSubmit={handleSubmit}>
-
       <div className='mb-8'>
-      <h2 className='text-2xl font-bold'>Author:</h2>
-      {formData.name && <div className="text-lg font-bold">{formData.name}</div>}
+        <h2 className='text-2xl font-bold'>Author:</h2>
+        {formData.name && <div className="text-lg font-bold">{formData.name}</div>}
       </div>
-
-
       <div>
         <label>
           Name:

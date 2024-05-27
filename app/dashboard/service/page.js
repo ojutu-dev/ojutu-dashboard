@@ -14,6 +14,9 @@ export default function Section() {
   const { content } = useContent();
   const [section, setSection] = useState('');
   const [items, setItems] = useState([]);
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (pathname) {
@@ -23,6 +26,32 @@ export default function Section() {
       setItems(content[sectionName] || []);
     }
   }, [pathname, content]);
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const response = await fetch('/api/service');
+        const data = await response.json();
+
+        if (data.success) {
+          setServices(data.data);
+          console.log(data)
+        } else {
+          setError('Failed to fetch Services');
+        }
+      } catch (err) {
+        setError('An error occurred while fetching Services');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>{error}</p>;
+
 
   const handleItemClick = (id) => {
     router.push(`/dashboard/${section}/${id}`);
@@ -37,14 +66,14 @@ export default function Section() {
           <div>
             <h2>{`Content for ${section.charAt(0).toUpperCase() + section.slice(1)}`}</h2>
             <ul>
-              {items.map((item) => (
+              {services.map((item) => (
                 <li
-                  key={item.id}
+                  key={item._id}
                   className="flex items-center border p-2 my-2 cursor-pointer"
-                  onClick={() => handleItemClick(item.id)}
+                  onClick={() => handleItemClick(item._id)}
                 >
-                  {item.image && <Image src={item.image} alt={item.title || item.name} width={50} height={50} className="w-16 h-16 object-cover mr-4" />}
-                  <h3>{item.title || item.name}</h3>
+                  {/* {item.image && <Image src={item.image} alt={item.title || item.name} width={50} height={50} className="w-16 h-16 object-cover mr-4" />} */}
+                  <h3>{item.title}</h3>
                 </li>
               ))}
             </ul>

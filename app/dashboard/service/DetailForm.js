@@ -8,10 +8,11 @@ export default function ServiceDetailForm() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
+  
   const { content, addItem, updateItem, deleteItem } = useContent();
   const [formData, setFormData] = useState({
     id: Date.now(),
-    name: "",
+    title: "",
     description: "",
   });
   const [section, setSection] = useState("");
@@ -44,6 +45,8 @@ export default function ServiceDetailForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+
     if (isEditing) {
       updateItem(section, formData.id, formData);
     } else {
@@ -76,7 +79,7 @@ export default function ServiceDetailForm() {
           <input
             type="text"
             name="name"
-            value={formData.name}
+            value={formData.title}
             onChange={handleChange}
             className="p-2 border rounded w-full outline-none text-black"
           />
