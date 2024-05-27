@@ -144,7 +144,7 @@ export default function ServiceDetailForm() {
       </div>
       <div className="flex space-x-2 mt-4">
         <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-          {isEditing ? 'Update' : 'Submit'}
+          {isEditing ? 'Update' : 'Publish'}
         </button>
         <button type="button" onClick={handleCancel} className="bg-gray-500 text-white p-2 rounded">
           Cancel
