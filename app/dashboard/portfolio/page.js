@@ -14,6 +14,9 @@ export default function Section() {
   const { content } = useContent();
   const [section, setSection] = useState('');
   const [items, setItems] = useState([]);
+  const [portolios, setPortfolios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (pathname) {
@@ -23,6 +26,28 @@ export default function Section() {
       setItems(content[sectionName] || []);
     }
   }, [pathname, content]);
+
+  useEffect(() => {
+    const fetchPortfolios = async () => {
+      try {
+        const response = await fetch('/api/portfolio');
+        const data = await response.json();
+
+        if (data.success) {
+          setPortfolios(data.data);
+        } else {
+          setError('Failed to fetch Portfolios');
+          console.log(error)
+        }
+      } catch (err) {
+        setError('An error occurred while fetching Portfolios');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPortfolios();
+  }, []);
 
   const handleItemClick = (id) => {
     router.push(`/dashboard/${section}/${id}`);
@@ -37,7 +62,7 @@ export default function Section() {
           <div>
             <h2>{`Content for ${section.charAt(0).toUpperCase() + section.slice(1)}`}</h2>
             <ul>
-              {items.map((item) => (
+              {portolios.map((item) => (
                 <li
                   key={item.id}
                   className="flex items-center border p-2 my-2 cursor-pointer"

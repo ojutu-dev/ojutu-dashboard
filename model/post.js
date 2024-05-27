@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import { BlockContent } from './blockContent';
 
 const { Schema, model } = mongoose;
 
