@@ -1,7 +1,6 @@
 'use client';
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 
 export default function DetailForm() {
   const router = useRouter();
@@ -28,12 +27,14 @@ export default function DetailForm() {
 
   useEffect(() => {
     if (params.id && section) {
-      axios.get(`/api/author/${params.id}`).then(response => {
-        const item = response.data;
-        setFormData(item);
-        setImagePreview(item.image);
-        setIsEditing(true);
-      });
+      fetch(`/api/author/${params.id}`)
+        .then(response => response.json())
+        .then(data => {
+          setFormData(data);
+          setImagePreview(data.image);
+          setIsEditing(true);
+        })
+        .catch(error => console.error('Error fetching author:', error));
     }
   }, [params.id, section]);
 
@@ -61,13 +62,19 @@ export default function DetailForm() {
     try {
       const formDataCopy = { ...formData };
       if (formData.image && formData.image instanceof File) {
-        const imageBase64 = await convertFileToBase64(formData.image);
-        formDataCopy.image = imageBase64;
+        formDataCopy.image = await convertFileToBase64(formData.image);
       }
-      if (isEditing) {
-        await axios.put(`/api/author/${formData.id}`, formDataCopy);
-      } else {
-        await axios.post(`/api/author`, formDataCopy);
+      const method = isEditing ? 'PUT' : 'POST';
+      const url = isEditing ? `/api/author/${params.id}` : '/api/author';
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formDataCopy),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to save author');
       }
       router.push(`/dashboard/${section}`);
     } catch (error) {
@@ -81,7 +88,12 @@ export default function DetailForm() {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`/api/author/${formData.id}`);
+      const response = await fetch(`/api/author/${params.id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete author');
+      }
       router.push(`/dashboard/${section}`);
     } catch (error) {
       console.error('Error deleting item:', error);
