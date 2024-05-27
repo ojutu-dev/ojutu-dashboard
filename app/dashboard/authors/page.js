@@ -49,7 +49,6 @@ export default function Section() {
     fetchAuthors();
   }, []);
 
-  // if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
 
   const handleItemClick = (id) => {
@@ -67,6 +66,7 @@ export default function Section() {
             <ul>
               {loading ? (
           <div className="flex justify-center bg-grey-500 h-2 w-12 items-center">
+            Loaading...
             
           </div>
         ) : ( authors.map((item) => (

@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       const posts = await Post.find().populate('author').populate('category');
-      res.status(200).json(posts);
+      res.status(200).json({success:true, data:posts});
     } catch (error) {
       res.status(500).json({ message: 'Error fetching posts', error });
     }
@@ -56,7 +56,6 @@ export default async function handler(req, res) {
         author: authorId,
         category: categoryId,
       });
-      // console.log(featuredImageUrl)
       
       await post.save();
 
@@ -64,8 +63,6 @@ export default async function handler(req, res) {
   
     } catch (error) {
       res.status(500).json({ message: 'Error creating post', error });
-      console.error('Error uploading image:', error);
-      console.log(process.env.CLOUDINARY_CLOUD_NAME, process.env.CLOUDINARY_API_KEY, process.env.CLOUDINARY_API_SECRET);
     }
   } else {
     res.status(405).json({ message: 'Method not allowed' });
