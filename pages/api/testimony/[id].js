@@ -24,32 +24,22 @@ export default async function handler(req, res) {
       res.status(500).json({ message: 'Error fetching testimony', error });
     }
   } else if (req.method === 'PUT') {
-    const { title, work, image, star, content } = req.body;
     try {
-      const testimony = await Testimony.findById(id);
-      if (!testimony) {
+      const { title, work, image, star, content } = req.body;
+      // const uploadedImage = await cloudinary.uploader.upload(image, {
+      //   folder: 'ojutu',
+      // });
+      const updatedTestimony = await Testimony.findByIdAndUpdate(
+        id,
+        { title, work, image, star, content },
+        { new: true, runValidators: true }
+      );
+      if (!updatedTestimony) {
         return res.status(404).json({ message: 'Testimony not found' });
       }
-
-      // If there's a new image, upload it to Cloudinary
-      if (image) {
-        const uploadedImage = await cloudinary.uploader.upload(image, {
-          folder: 'testimonies',
-        });
-        testimony.image = uploadedImage.secure_url;
-      }
-
-      // Update the testimony fields
-      if (title) testimony.title = title;
-      if (work) testimony.work = work;
-      if (star) testimony.star = star;
-      if (content) testimony.content = content;
-
-      await testimony.save();
-
-      res.status(200).json(testimony);
+      res.status(200).json(updatedTestimony);
     } catch (error) {
-      res.status(500).json({ message: 'Error updating testimony', error });
+      res.status(500).json({ message: 'Error updating Testimony', error });
     }
   } else if (req.method === 'DELETE') {
     try {
