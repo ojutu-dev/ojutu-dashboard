@@ -3,6 +3,7 @@
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useContent } from '../../../context/ContentContext';
+import ConfirmationModal from '../../../components/ConfirmationModal';
 
 export default function DetailForm() {
   const router = useRouter();
@@ -11,13 +12,14 @@ export default function DetailForm() {
   const { content, addItem, updateItem, deleteItem } = useContent();
   const [formData, setFormData] = useState({
     id: Date.now(),
-    name: '',
+    title: '',
     slug: '',
     image: null,
   });
   const [section, setSection] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (pathname) {
@@ -29,18 +31,27 @@ export default function DetailForm() {
 
   useEffect(() => {
     if (params.id && section) {
-      const item = content[section]?.find((item) => item.id === parseInt(params.id));
-      if (item) {
-        setFormData(item);
-        setImagePreview(item.image);
-        setIsEditing(true);
-      }
+      const fetchBrand = async () => {
+        try {
+          const response = await fetch(`/api/brand/${params.id}`);
+          const data = await response.json();
+          if (data) {
+            setFormData(data);
+            setImagePreview(data.image);
+            setIsEditing(true);
+          }
+        } catch (error) {
+          console.error('Error fetching brand:', error);
+        }
+      };
+
+      fetchBrand();
     }
-  }, [params.id, section, content]);
+  }, [params.id, section]);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    if (name === 'image') {
+    if (name === 'image' && files) {
       const file = files[0];
       setFormData({ ...formData, image: file });
 
@@ -55,31 +66,49 @@ export default function DetailForm() {
   };
 
   const handleSlugGeneration = () => {
-    setFormData({ ...formData, slug: formData.name.toLowerCase().replace(/\s+/g, '-') });
+    setFormData({ ...formData, slug: formData.title.toLowerCase().replace(/\s+/g, '-') });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const imageDataUrl = reader.result;
-      const newFormData = { ...formData, image: imageDataUrl };
-      if (isEditing) {
-        updateItem(section, formData.id, newFormData);
+    const method = isEditing ? 'PUT' : 'POST';
+    const url = isEditing ? `/api/brand/${params.id}` : '/api/brand';
+
+    try {
+      const formDataToSend = { ...formData };
+      if (formData.image instanceof File) {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          formDataToSend.image = reader.result;
+          await sendRequest();
+        };
+        reader.readAsDataURL(formData.image);
       } else {
-        addItem(section, newFormData);
+        await sendRequest();
       }
-      router.push(`/dashboard/${section}`);
-    };
-    if (formData.image instanceof File) {
-      reader.readAsDataURL(formData.image);
-    } else {
-      if (isEditing) {
-        updateItem(section, formData.id, formData);
-      } else {
-        addItem(section, formData);
+
+      async function sendRequest() {
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formDataToSend),
+        });
+        if (response.ok) {
+          const brand = await response.json();
+          if (isEditing) {
+            updateItem(section, brand.id, brand);
+          } else {
+            addItem(section, brand);
+          }
+          router.push(`/dashboard/${section}`);
+        } else {
+          console.error('Failed to save brand');
+        }
       }
-      router.push(`/dashboard/${section}`);
+    } catch (error) {
+      console.error('Error submitting form:', error);
     }
   };
 
@@ -88,59 +117,50 @@ export default function DetailForm() {
   };
 
   const handleDelete = () => {
-    deleteItem(section, formData.id);
-    router.push(`/dashboard/${section}`);
+    setIsModalOpen(true); // Open the modal
+  };
+
+  const confirmDelete = async () => {
+    try {
+      const response = await fetch(`/api/brand/${params.id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        deleteItem(section, formData.id);
+        router.push(`/dashboard/${section}`);
+      } else {
+        console.error('Failed to delete brand');
+      }
+    } catch (error) {
+      console.error('Error deleting brand:', error);
+    } finally {
+      setIsModalOpen(false); // Close the modal
+    }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false); // Close the modal
   };
 
   return (
     <form onSubmit={handleSubmit}>
-
       <div className='mb-8'>
-      <h2 className='text-2xl font-bold'>Brand:</h2>
-      {formData.name && <div className="text-lg font-bold">{formData.name}</div>}
+        <h2 className='text-2xl font-bold'>Brand:</h2>
+        {formData.title && <div className="text-lg font-bold">{formData.title}</div>}
       </div>
-
       <div>
         <label>
-          Name:
-          {formData.name && <div className="text-lg font-bold">{formData.name}</div>}
+          Title:
           <input
             type="text"
-            name="name"
-            value={formData.name}
+            name="title"
+            value={formData.title}
             onChange={handleChange}
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>
       </div>
-      <div className="mt-4 flex items-center">
-        <label className="w-full">
-          Slug:
-          <input
-            type="text"
-            name="slug"
-            value={formData.slug}
-            onChange={handleChange}
-            className="p-2 border rounded w-full outline-none text-black"
-          />
-        </label>
-        <button type="button" onClick={handleSlugGeneration} className="ml-2 p-2 bg-blue-500 text-white rounded">
-          Generate Slug
-        </button>
-      </div>
-      <div className="mt-4">
-        <label>
-          Image:
-          {imagePreview && <img src={imagePreview} alt="Preview" className="w-32 h-32 object-cover my-2" />}
-          <input
-            type="file"
-            name="image"
-            onChange={handleChange}
-            className="p-2 border rounded w-full"
-            accept="image/*"
-          />
-        </label>
-      </div>
+      
       <div className="flex space-x-2 mt-4">
         <button type="submit" className="bg-blue-500 text-white p-2 rounded">
           {isEditing ? 'Update' : 'Publish'}
@@ -154,6 +174,11 @@ export default function DetailForm() {
           </button>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onConfirm={confirmDelete}
+      />
     </form>
   );
 }
