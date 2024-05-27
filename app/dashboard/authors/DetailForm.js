@@ -2,6 +2,7 @@
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+
 export default function DetailForm() {
   const router = useRouter();
   const pathname = usePathname();
@@ -11,10 +12,12 @@ export default function DetailForm() {
     name: '',
     slug: '',
     image: null,
+    description: '',
   });
   const [section, setSection] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+
   useEffect(() => {
     if (pathname) {
       const pathParts = pathname.split('/');
@@ -22,10 +25,10 @@ export default function DetailForm() {
       setSection(sectionName);
     }
   }, [pathname]);
+
   useEffect(() => {
     if (params.id && section) {
-      // Fetch the item data from the API if in edit mode
-      axios.get(`/api/${section}/${params.id}`).then(response => {
+      axios.get(`/api/author/${params.id}`).then(response => {
         const item = response.data;
         setFormData(item);
         setImagePreview(item.image);
@@ -33,6 +36,7 @@ export default function DetailForm() {
       });
     }
   }, [params.id, section]);
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (name === 'image' && files) {
@@ -47,9 +51,11 @@ export default function DetailForm() {
       setFormData({ ...formData, [name]: value });
     }
   };
+
   const handleSlugGeneration = () => {
     setFormData({ ...formData, slug: formData.name.toLowerCase().replace(/\s+/g, '-') });
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -59,26 +65,29 @@ export default function DetailForm() {
         formDataCopy.image = imageBase64;
       }
       if (isEditing) {
-        await axios.put(`/api/${section}/${formData.id}`, formDataCopy);
+        await axios.put(`/api/author/${formData.id}`, formDataCopy);
       } else {
-        await axios.post(`/api/${section}`, formDataCopy);
+        await axios.post(`/api/author`, formDataCopy);
       }
       router.push(`/dashboard/${section}`);
     } catch (error) {
       console.error('Error submitting form:', error);
     }
   };
+
   const handleCancel = () => {
     router.back();
   };
+
   const handleDelete = async () => {
     try {
-      await axios.delete(`/api/${section}/${formData.id}`);
+      await axios.delete(`/api/author/${formData.id}`);
       router.push(`/dashboard/${section}`);
     } catch (error) {
       console.error('Error deleting item:', error);
     }
   };
+
   const convertFileToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -87,6 +96,7 @@ export default function DetailForm() {
       reader.onerror = (error) => reject(error);
     });
   };
+
   return (
     <form onSubmit={handleSubmit}>
       <div className='mb-8'>
@@ -130,6 +140,17 @@ export default function DetailForm() {
             onChange={handleChange}
             className="p-2 border rounded w-full"
             accept="image/*"
+          />
+        </label>
+      </div>
+      <div className="mt-4">
+        <label>
+          Description:
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            className="p-2 border rounded w-full outline-none text-black aspect-[6/1] resize-none"
           />
         </label>
       </div>
