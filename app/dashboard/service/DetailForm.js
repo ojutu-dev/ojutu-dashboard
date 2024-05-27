@@ -3,6 +3,7 @@
 import { useRouter, usePathname, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useContent } from "../../../context/ContentContext";
+import ConfirmationModal from "../../../components/ConfirmationModal";
 
 export default function ServiceDetailForm() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function ServiceDetailForm() {
   });
   const [section, setSection] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (pathname) {
@@ -113,6 +115,10 @@ export default function ServiceDetailForm() {
   };
 
   const handleDelete = async () => {
+    setIsModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
     try {
       const response = await fetch(`/api/service/${formData._id}`, {
         method: "DELETE",
@@ -127,15 +133,21 @@ export default function ServiceDetailForm() {
       }
     } catch (error) {
       console.error("Error deleting service:", error);
+    } finally {
+      setIsModalOpen(false);
     }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-8">
         <h2 className="text-2xl font-bold">Service:</h2>
-        {formData.name && (
-          <div className="text-lg font-bold">{formData.name}</div>
+        {formData.title && (
+          <div className="text-lg font-bold">{formData.title}</div>
         )}
       </div>
 
@@ -165,7 +177,7 @@ export default function ServiceDetailForm() {
 
       <div className="flex space-x-2 mt-4">
         <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-          {isEditing ? "Update" : "Submit"}
+          {isEditing ? "Update" : "Publish"}
         </button>
         <button
           type="button"
@@ -184,6 +196,11 @@ export default function ServiceDetailForm() {
           </button>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onConfirm={confirmDelete}
+      />
     </form>
   );
 }

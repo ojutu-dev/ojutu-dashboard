@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
+import ConfirmationModal from '../../../components/ConfirmationModal';
 
 export default function DetailForm() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
   const [formData, setFormData] = useState({
-    id: Date.now(),
+    id: null,
     title: '',
     work: '',
     image: null,
@@ -18,6 +19,7 @@ export default function DetailForm() {
   const [section, setSection] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (pathname) {
@@ -32,9 +34,9 @@ export default function DetailForm() {
       try {
         const response = await fetch(`/api/testimony/${id}`);
         const data = await response.json();
-        if (data) {
-          setFormData(data);
-          setImagePreview(data.image);
+        if (data.success) {
+          setFormData(data.data);
+          setImagePreview(data.data.image);
           setIsEditing(true);
         }
       } catch (error) {
@@ -67,7 +69,7 @@ export default function DetailForm() {
     e.preventDefault();
     const method = isEditing ? 'PUT' : 'POST';
     const url = isEditing ? `/api/testimony/${params.id}` : '/api/testimony';
-    
+
     try {
       const formDataToSend = { ...formData };
       if (formData.image instanceof File) {
@@ -104,7 +106,11 @@ export default function DetailForm() {
     router.back();
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
+    setIsModalOpen(true); // Open the modal
+  };
+
+  const confirmDelete = async () => {
     try {
       const response = await fetch(`/api/testimony/${params.id}`, {
         method: 'DELETE',
@@ -116,7 +122,13 @@ export default function DetailForm() {
       }
     } catch (error) {
       console.error('Error deleting testimony:', error);
+    } finally {
+      setIsModalOpen(false);
     }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
   };
 
   return (
@@ -200,6 +212,11 @@ export default function DetailForm() {
           </button>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onConfirm={confirmDelete}
+      />
     </form>
   );
 }
