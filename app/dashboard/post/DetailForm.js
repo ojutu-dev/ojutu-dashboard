@@ -315,6 +315,7 @@ export default function DetailForm() {
             onChange={handleChange}
             className="p-2 border rounded w-full outline-none text-black"
           >
+            <option value="">Select Category</option>
             {categoryOptions.map((category) => (
               <option key={category._id} value={category.title}>{category.title}</option>
             ))}
@@ -330,6 +331,7 @@ export default function DetailForm() {
             onChange={handleChange}
             className="p-2 border rounded w-full outline-none text-black"
           >
+            <option value="">Select Author</option>
             {authorOptions.map((author) => (
               <option key={author._id} value={author.name}>{author.name}</option>
             ))}

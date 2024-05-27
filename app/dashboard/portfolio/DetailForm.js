@@ -1,8 +1,9 @@
 'use client';
 
 import { useRouter, usePathname, useParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useContent } from '../../../context/ContentContext';
+import JoditEditor from 'jodit-react';
 
 export default function DetailForm() {
   const router = useRouter();
@@ -15,12 +16,12 @@ export default function DetailForm() {
     company: '',
     slug: '',
     category: '',
-    tag: '',
+    brand: '',
     mainImage: null,
     headerImage: null,
     otherImage: null,
     description: '',
-    keywords: '',
+    keywords: [],
     body: '',
   });
   const [section, setSection] = useState('');
@@ -29,8 +30,9 @@ export default function DetailForm() {
   const [headerImagePreview, setHeaderImagePreview] = useState(null);
   const [otherImagePreview, setOtherImagePreview] = useState(null);
   const [categoryOptions, setCategoryOptions] = useState([]);
-  const [tagOptions, setTagOptions] = useState([]);
+  const [brandOptions, setBrandOptions] = useState([]);
   const [keywordOptions, setKeywordOptions] = useState([]);
+  const editor = useRef(null);
 
   useEffect(() => {
     if (pathname) {
@@ -54,36 +56,53 @@ export default function DetailForm() {
   }, [params.id, section, content]);
 
   useEffect(() => {
-    // Fetch categories, tags, and keywords data and set options
     const fetchCategoryOptions = async () => {
-      // Example: Fetch categories from your API or context
-      // const categoriesData = await fetchCategories();
-      // setCategoryOptions(categoriesData);
-      // For now, using sample data
-      const categoriesData = ['Category 1', 'Category 2', 'Category 3'];
-      setCategoryOptions(categoriesData);
+      try {
+        const response = await fetch('/api/category');
+        const data = await response.json();
+        console.log('Fetched categories:', data);
+        if (data.success !== false) {
+          setCategoryOptions(data.data || data);
+        } else {
+          console.error('Failed to fetch categories');
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
     };
 
-    const fetchTagOptions = async () => {
-      // Example: Fetch tags from your API or context
-      // const tagsData = await fetchTags();
-      // setTagOptions(tagsData);
-      // For now, using sample data
-      const tagsData = ['Tag 1', 'Tag 2', 'Tag 3'];
-      setTagOptions(tagsData);
+    const fetchBrandOptions = async () => {
+      try {
+        const response = await fetch('/api/brand');
+        const data = await response.json();
+        console.log('Fetched brands:', data);
+        if (data.success !== false) {
+          setBrandOptions(data.data || data);
+        } else {
+          console.error('Failed to fetch brands');
+        }
+      } catch (error) {
+        console.error('Error fetching brands:', error);
+      }
     };
 
     const fetchKeywordOptions = async () => {
-      // Example: Fetch keywords from your API or context
-      // const keywordsData = await fetchKeywords();
-      // setKeywordOptions(keywordsData);
-      // For now, using sample data
-      const keywordsData = ['Keyword 1', 'Keyword 2', 'Keyword 3'];
-      setKeywordOptions(keywordsData);
+      try {
+        const response = await fetch('/api/keywords');
+        const data = await response.json();
+        console.log('Fetched keywords:', data);
+        if (data.success !== false) {
+          setKeywordOptions(data.data || data);
+        } else {
+          console.error('Failed to fetch keywords');
+        }
+      } catch (error) {
+        console.error('Error fetching keywords:', error);
+      }
     };
 
     fetchCategoryOptions();
-    fetchTagOptions();
+    fetchBrandOptions();
     fetchKeywordOptions();
   }, []);
 
@@ -116,6 +135,11 @@ export default function DetailForm() {
         setOtherImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
+    } else if (name === 'keywords') {
+      const newKeywords = formData.keywords.includes(value)
+        ? formData.keywords.filter((keyword) => keyword !== value)
+        : [...formData.keywords, value];
+      setFormData({ ...formData, keywords: newKeywords });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -144,14 +168,21 @@ export default function DetailForm() {
     router.push(`/dashboard/${section}`);
   };
 
+  const config = useMemo(
+    () => ({
+      toolbarAdaptive: false, // Disable the adaptive toolbar
+      buttons: 'paragraph,|,bold,italic,ul,paste,selectall,file,image',
+      placeholder: 'Empty',
+    }),
+    []
+  );
+
   return (
     <form onSubmit={handleSubmit}>
-
       <div className='mb-8'>
-      <h2 className='text-2xl font-bold'>Portfolio:</h2>
-      {formData.title && <div className="text-lg font-bold">{formData.title}</div>}
+        <h2 className='text-2xl font-bold'>Portfolio:</h2>
+        {formData.title && <div className="text-lg font-bold">{formData.title}</div>}
       </div>
-
       <div>
         <label>
           Title:
@@ -201,24 +232,24 @@ export default function DetailForm() {
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Category</option>
-            {categoryOptions.map((category, index) => (
-              <option key={index} value={category}>{category}</option>
+            {categoryOptions.map((category) => (
+              <option key={category._id} value={category.title}>{category.title}</option>
             ))}
           </select>
         </label>
       </div>
       <div className="mt-4">
         <label>
-          Tag:
+          Brand:
           <select
-            name="tag"
-            value={formData.tag}
+            name="brand"
+            value={formData.brand}
             onChange={handleChange}
             className="p-2 border rounded w-full outline-none text-black"
           >
-            <option value="">Select Tag</option>
-            {tagOptions.map((tag, index) => (
-              <option key={index} value={tag}>{tag}</option>
+            <option value="">Select Brand</option>
+            {brandOptions.map((brand) => (
+              <option key={brand._id} value={brand.title}>{brand.title}</option>
             ))}
           </select>
         </label>
@@ -226,17 +257,21 @@ export default function DetailForm() {
       <div className="mt-4">
         <label>
           Keywords:
-          <select
-            name="keywords"
-            value={formData.keywords}
-            onChange={handleChange}
-            className="p-2 border rounded w-full outline-none text-black"
-          >
-            <option value="">Select Keywords</option>
-            {keywordOptions.map((keyword, index) => (
-              <option key={index} value={keyword}>{keyword}</option>
+          <div className="flex flex-wrap gap-2">
+            {keywordOptions.map((keyword) => (
+              <label key={keyword._id} className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="keywords"
+                  value={keyword.title}
+                  checked={formData.keywords.includes(keyword.title)}
+                  onChange={handleChange}
+                  className="mr-2"
+                />
+                {keyword.title}
+              </label>
             ))}
-          </select>
+          </div>
         </label>
       </div>
       <div className="mt-4">
@@ -292,11 +327,11 @@ export default function DetailForm() {
       <div className="mt-4">
         <label>
           Body:
-          <textarea
-            name="body"
+          <JoditEditor
+            ref={editor}
             value={formData.body}
-            onChange={handleChange}
-            className="p-2 border rounded w-full resize-none aspect-[6/1] outline-none text-black"
+            onChange={(newBody) => setFormData({ ...formData, body: newBody })}
+            config={config}
           />
         </label>
       </div>
