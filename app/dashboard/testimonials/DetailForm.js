@@ -9,7 +9,7 @@ export default function DetailForm() {
   const pathname = usePathname();
   const params = useParams();
   const [formData, setFormData] = useState({
-    id: Date.now(),
+    id: null,
     title: '',
     work: '',
     image: null,
@@ -34,9 +34,9 @@ export default function DetailForm() {
       try {
         const response = await fetch(`/api/testimony/${id}`);
         const data = await response.json();
-        if (data) {
-          setFormData(data);
-          setImagePreview(data.image);
+        if (data.success) {
+          setFormData(data.data);
+          setImagePreview(data.data.image);
           setIsEditing(true);
         }
       } catch (error) {
@@ -69,7 +69,7 @@ export default function DetailForm() {
     e.preventDefault();
     const method = isEditing ? 'PUT' : 'POST';
     const url = isEditing ? `/api/testimony/${params.id}` : '/api/testimony';
-    
+
     try {
       const formDataToSend = { ...formData };
       if (formData.image instanceof File) {
@@ -106,7 +106,7 @@ export default function DetailForm() {
     router.back();
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     setIsModalOpen(true); // Open the modal
   };
 
@@ -123,12 +123,12 @@ export default function DetailForm() {
     } catch (error) {
       console.error('Error deleting testimony:', error);
     } finally {
-      setIsModalOpen(false); // Close the modal
+      setIsModalOpen(false);
     }
   };
 
   const closeModal = () => {
-    setIsModalOpen(false); // Close the modal
+    setIsModalOpen(false);
   };
 
   return (
