@@ -4,6 +4,7 @@ import { useRouter, usePathname, useParams } from 'next/navigation';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useContent } from '../../../context/ContentContext';
 import JoditEditor from 'jodit-react';
+import axios from 'axios';
 import ConfirmationModal from '../../../components/ConfirmationModal';
 
 export default function DetailForm() {
@@ -30,7 +31,7 @@ export default function DetailForm() {
   const [ogImagePreview, setOgImagePreview] = useState(null);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [authorOptions, setAuthorOptions] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
   const editor = useRef(null);
 
   useEffect(() => {
@@ -127,6 +128,10 @@ export default function DetailForm() {
     setFormData({ ...formData, slug: formData.title.toLowerCase().replace(/\s+/g, '-') });
   };
 
+  const handleBodyChange = (value) => {
+    setFormData({ ...formData, body: value });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const method = isEditing ? 'PUT' : 'POST';
@@ -214,11 +219,56 @@ export default function DetailForm() {
     setIsModalOpen(false); // Close the modal
   };
 
+  const uploadHandler = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const response = await axios.post('/api/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data.url; // URL of the uploaded image
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      return null;
+    }
+  };
+
   const config = useMemo(
     () => ({
       toolbarAdaptive: false,
       buttons: 'paragraph,|,bold,italic,ul,paste,selectall,file,image',
-      placeholder: 'Empty',
+      uploader: {
+        insertImageAsBase64URI: true,
+        imagesExtensions: ['jpg', 'png', 'jpeg', 'gif'],
+        url: '/api/upload',
+        format: 'json',
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer your-access-token',
+        },
+        filesVariableName: function (t) {
+          return 'files[' + t + ']';
+        },
+        process: function (resp) {
+          return {
+            files: resp.files.map(function (file) {
+              return {
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                url: file.url,
+                thumb: file.url,
+                error: file.error,
+              };
+            }),
+            path: resp.path,
+            baseurl: resp.baseurl,
+          };
+        },
+      },
+      placeholder: 'Start typing...',
     }),
     []
   );
@@ -344,8 +394,9 @@ export default function DetailForm() {
           <JoditEditor
             ref={editor}
             value={formData.body}
-            onChange={(newBody) => setFormData({ ...formData, body: newBody })}
+            onChange={handleBodyChange}
             config={config}
+            className="bg-white"
           />
         </label>
       </div>

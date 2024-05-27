@@ -4,6 +4,8 @@ import { useRouter, usePathname, useParams } from 'next/navigation';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useContent } from '../../../context/ContentContext';
 import JoditEditor from 'jodit-react';
+import axios from 'axios';
+import ConfirmationModal from '../../../components/ConfirmationModal';
 
 export default function DetailForm() {
   const router = useRouter();
@@ -32,6 +34,7 @@ export default function DetailForm() {
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [brandOptions, setBrandOptions] = useState([]);
   const [keywordOptions, setKeywordOptions] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
   const editor = useRef(null);
 
   useEffect(() => {
@@ -149,6 +152,10 @@ export default function DetailForm() {
     setFormData({ ...formData, slug: formData.title.toLowerCase().replace(/\s+/g, '-') });
   };
 
+  const handleBodyChange = (value) => {
+    setFormData({ ...formData, body: value });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isEditing) {
@@ -168,11 +175,56 @@ export default function DetailForm() {
     router.push(`/dashboard/${section}`);
   };
 
+  const uploadHandler = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const response = await axios.post('/api/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data.url; // URL of the uploaded image
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      return null;
+    }
+  };
+
   const config = useMemo(
     () => ({
-      toolbarAdaptive: false, // Disable the adaptive toolbar
+      toolbarAdaptive: false,
       buttons: 'paragraph,|,bold,italic,ul,paste,selectall,file,image',
-      placeholder: 'Empty',
+      uploader: {
+        insertImageAsBase64URI: true,
+        imagesExtensions: ['jpg', 'png', 'jpeg', 'gif'],
+        url: '/api/upload',
+        format: 'json',
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer your-access-token',
+        },
+        filesVariableName: function (t) {
+          return 'files[' + t + ']';
+        },
+        process: function (resp) {
+          return {
+            files: resp.files.map(function (file) {
+              return {
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                url: file.url,
+                thumb: file.url,
+                error: file.error,
+              };
+            }),
+            path: resp.path,
+            baseurl: resp.baseurl,
+          };
+        },
+      },
+      placeholder: 'Start typing...',
     }),
     []
   );
@@ -232,8 +284,8 @@ export default function DetailForm() {
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Category</option>
-            {categoryOptions.map((category) => (
-              <option key={category._id} value={category.title}>{category.title}</option>
+            {categoryOptions.map((category, index) => (
+              <option key={index} value={category.title}>{category.title}</option>
             ))}
           </select>
         </label>
@@ -248,8 +300,8 @@ export default function DetailForm() {
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Brand</option>
-            {brandOptions.map((brand) => (
-              <option key={brand._id} value={brand.title}>{brand.title}</option>
+            {brandOptions.map((brand, index) => (
+              <option key={index} value={brand.title}>{brand.title}</option>
             ))}
           </select>
         </label>
@@ -257,21 +309,19 @@ export default function DetailForm() {
       <div className="mt-4">
         <label>
           Keywords:
-          <div className="flex flex-wrap gap-2">
-            {keywordOptions.map((keyword) => (
-              <label key={keyword._id} className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="keywords"
-                  value={keyword.title}
-                  checked={formData.keywords.includes(keyword.title)}
-                  onChange={handleChange}
-                  className="mr-2"
-                />
-                {keyword.title}
-              </label>
-            ))}
-          </div>
+          {keywordOptions.map((keyword, index) => (
+            <div key={index} className="flex items-center">
+              <input
+                type="checkbox"
+                name="keywords"
+                value={keyword.title}
+                checked={formData.keywords.includes(keyword.title)}
+                onChange={handleChange}
+                className="mr-2"
+              />
+              <span>{keyword.title}</span>
+            </div>
+          ))}
         </label>
       </div>
       <div className="mt-4">
@@ -330,8 +380,9 @@ export default function DetailForm() {
           <JoditEditor
             ref={editor}
             value={formData.body}
-            onChange={(newBody) => setFormData({ ...formData, body: newBody })}
+            onChange={handleBodyChange}
             config={config}
+            className="bg-white"
           />
         </label>
       </div>
