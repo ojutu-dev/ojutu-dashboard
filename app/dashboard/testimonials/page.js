@@ -5,28 +5,23 @@ import Sidebar from '../../../components/Sidebar';
 import MainContent from '../../../components/MainContent';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useContent } from '../../../context/ContentContext';
 import Image from 'next/image';
 
 export default function Section() {
   const router = useRouter();
   const pathname = usePathname();
-  const { content } = useContent();
   const [section, setSection] = useState('');
-  // const [items, setItems] = useState([]);
   const [testimonies, setTestimonies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
 
   useEffect(() => {
     if (pathname) {
       const pathParts = pathname.split('/');
       const sectionName = pathParts[pathParts.length - 1];
       setSection(sectionName);
-      setTestimonies(content[sectionName] || []);
     }
-  }, [pathname, content]);
+  }, [pathname]);
 
   useEffect(() => {
     const fetchTestimonies = async () => {
@@ -38,7 +33,6 @@ export default function Section() {
           setTestimonies(data.data);
         } else {
           setError('Failed to fetch testimonies');
-          console.log(error)
         }
       } catch (err) {
         setError('An error occurred while fetching testimonies');
@@ -68,7 +62,7 @@ export default function Section() {
             <ul>
               {testimonies.map((item) => (
                 <li
-                  key={item.id}
+                  key={item._id}
                   className="flex items-center border p-2 my-2 cursor-pointer"
                   onClick={() => handleItemClick(item._id)}
                 >

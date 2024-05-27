@@ -14,7 +14,7 @@ export default function MainContent({ children }) {
     if (pathname) {
       const pathParts = pathname.split('/');
       const section = pathParts[pathParts.length - 1];
-      router.push(`/dashboard/${section}/create`);
+      router.push(`/dashboard/${section}/new`);
     }
   };
 
