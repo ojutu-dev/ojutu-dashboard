@@ -19,7 +19,7 @@ export default async function handler(req, res) {
       if (!testimony) {
         return res.status(404).json({ message: 'Testimony not found' });
       }
-      res.status(200).json(testimony);
+      res.status(200).json({success:true, data:testimony});
     } catch (error) {
       res.status(500).json({ message: 'Error fetching testimony', error });
     }
