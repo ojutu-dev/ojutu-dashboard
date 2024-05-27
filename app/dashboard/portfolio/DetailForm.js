@@ -1,8 +1,11 @@
 'use client';
 
 import { useRouter, usePathname, useParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useContent } from '../../../context/ContentContext';
+import JoditEditor from 'jodit-react';
+import axios from 'axios';
+import ConfirmationModal from '../../../components/ConfirmationModal';
 
 export default function DetailForm() {
   const router = useRouter();
@@ -15,12 +18,12 @@ export default function DetailForm() {
     company: '',
     slug: '',
     category: '',
-    tag: '',
+    brand: '',
     mainImage: null,
     headerImage: null,
     otherImage: null,
     description: '',
-    keywords: '',
+    keywords: [],
     body: '',
   });
   const [section, setSection] = useState('');
@@ -29,8 +32,10 @@ export default function DetailForm() {
   const [headerImagePreview, setHeaderImagePreview] = useState(null);
   const [otherImagePreview, setOtherImagePreview] = useState(null);
   const [categoryOptions, setCategoryOptions] = useState([]);
-  const [tagOptions, setTagOptions] = useState([]);
+  const [brandOptions, setBrandOptions] = useState([]);
   const [keywordOptions, setKeywordOptions] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
+  const editor = useRef(null);
 
   useEffect(() => {
     if (pathname) {
@@ -54,36 +59,53 @@ export default function DetailForm() {
   }, [params.id, section, content]);
 
   useEffect(() => {
-    // Fetch categories, tags, and keywords data and set options
     const fetchCategoryOptions = async () => {
-      // Example: Fetch categories from your API or context
-      // const categoriesData = await fetchCategories();
-      // setCategoryOptions(categoriesData);
-      // For now, using sample data
-      const categoriesData = ['Category 1', 'Category 2', 'Category 3'];
-      setCategoryOptions(categoriesData);
+      try {
+        const response = await fetch('/api/category');
+        const data = await response.json();
+        console.log('Fetched categories:', data);
+        if (data.success !== false) {
+          setCategoryOptions(data.data || data);
+        } else {
+          console.error('Failed to fetch categories');
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
     };
 
-    const fetchTagOptions = async () => {
-      // Example: Fetch tags from your API or context
-      // const tagsData = await fetchTags();
-      // setTagOptions(tagsData);
-      // For now, using sample data
-      const tagsData = ['Tag 1', 'Tag 2', 'Tag 3'];
-      setTagOptions(tagsData);
+    const fetchBrandOptions = async () => {
+      try {
+        const response = await fetch('/api/brand');
+        const data = await response.json();
+        console.log('Fetched brands:', data);
+        if (data.success !== false) {
+          setBrandOptions(data.data || data);
+        } else {
+          console.error('Failed to fetch brands');
+        }
+      } catch (error) {
+        console.error('Error fetching brands:', error);
+      }
     };
 
     const fetchKeywordOptions = async () => {
-      // Example: Fetch keywords from your API or context
-      // const keywordsData = await fetchKeywords();
-      // setKeywordOptions(keywordsData);
-      // For now, using sample data
-      const keywordsData = ['Keyword 1', 'Keyword 2', 'Keyword 3'];
-      setKeywordOptions(keywordsData);
+      try {
+        const response = await fetch('/api/keywords');
+        const data = await response.json();
+        console.log('Fetched keywords:', data);
+        if (data.success !== false) {
+          setKeywordOptions(data.data || data);
+        } else {
+          console.error('Failed to fetch keywords');
+        }
+      } catch (error) {
+        console.error('Error fetching keywords:', error);
+      }
     };
 
     fetchCategoryOptions();
-    fetchTagOptions();
+    fetchBrandOptions();
     fetchKeywordOptions();
   }, []);
 
@@ -116,6 +138,11 @@ export default function DetailForm() {
         setOtherImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
+    } else if (name === 'keywords') {
+      const newKeywords = formData.keywords.includes(value)
+        ? formData.keywords.filter((keyword) => keyword !== value)
+        : [...formData.keywords, value];
+      setFormData({ ...formData, keywords: newKeywords });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -123,6 +150,10 @@ export default function DetailForm() {
 
   const handleSlugGeneration = () => {
     setFormData({ ...formData, slug: formData.title.toLowerCase().replace(/\s+/g, '-') });
+  };
+
+  const handleBodyChange = (value) => {
+    setFormData({ ...formData, body: value });
   };
 
   const handleSubmit = (e) => {
@@ -144,14 +175,66 @@ export default function DetailForm() {
     router.push(`/dashboard/${section}`);
   };
 
+  const uploadHandler = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const response = await axios.post('/api/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data.url; // URL of the uploaded image
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      return null;
+    }
+  };
+
+  const config = useMemo(
+    () => ({
+      toolbarAdaptive: false,
+      buttons: 'paragraph,|,bold,italic,ul,paste,selectall,file,image',
+      uploader: {
+        insertImageAsBase64URI: true,
+        imagesExtensions: ['jpg', 'png', 'jpeg', 'gif'],
+        url: '/api/upload',
+        format: 'json',
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer your-access-token',
+        },
+        filesVariableName: function (t) {
+          return 'files[' + t + ']';
+        },
+        process: function (resp) {
+          return {
+            files: resp.files.map(function (file) {
+              return {
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                url: file.url,
+                thumb: file.url,
+                error: file.error,
+              };
+            }),
+            path: resp.path,
+            baseurl: resp.baseurl,
+          };
+        },
+      },
+      placeholder: 'Start typing...',
+    }),
+    []
+  );
+
   return (
     <form onSubmit={handleSubmit}>
-
       <div className='mb-8'>
-      <h2 className='text-2xl font-bold'>Portfolio:</h2>
-      {formData.title && <div className="text-lg font-bold">{formData.title}</div>}
+        <h2 className='text-2xl font-bold'>Portfolio:</h2>
+        {formData.title && <div className="text-lg font-bold">{formData.title}</div>}
       </div>
-
       <div>
         <label>
           Title:
@@ -202,23 +285,23 @@ export default function DetailForm() {
           >
             <option value="">Select Category</option>
             {categoryOptions.map((category, index) => (
-              <option key={index} value={category}>{category}</option>
+              <option key={index} value={category.title}>{category.title}</option>
             ))}
           </select>
         </label>
       </div>
       <div className="mt-4">
         <label>
-          Tag:
+          Brand:
           <select
-            name="tag"
-            value={formData.tag}
+            name="brand"
+            value={formData.brand}
             onChange={handleChange}
             className="p-2 border rounded w-full outline-none text-black"
           >
-            <option value="">Select Tag</option>
-            {tagOptions.map((tag, index) => (
-              <option key={index} value={tag}>{tag}</option>
+            <option value="">Select Brand</option>
+            {brandOptions.map((brand, index) => (
+              <option key={index} value={brand.title}>{brand.title}</option>
             ))}
           </select>
         </label>
@@ -226,17 +309,19 @@ export default function DetailForm() {
       <div className="mt-4">
         <label>
           Keywords:
-          <select
-            name="keywords"
-            value={formData.keywords}
-            onChange={handleChange}
-            className="p-2 border rounded w-full outline-none text-black"
-          >
-            <option value="">Select Keywords</option>
-            {keywordOptions.map((keyword, index) => (
-              <option key={index} value={keyword}>{keyword}</option>
-            ))}
-          </select>
+          {keywordOptions.map((keyword, index) => (
+            <div key={index} className="flex items-center">
+              <input
+                type="checkbox"
+                name="keywords"
+                value={keyword.title}
+                checked={formData.keywords.includes(keyword.title)}
+                onChange={handleChange}
+                className="mr-2"
+              />
+              <span>{keyword.title}</span>
+            </div>
+          ))}
         </label>
       </div>
       <div className="mt-4">
@@ -292,11 +377,12 @@ export default function DetailForm() {
       <div className="mt-4">
         <label>
           Body:
-          <textarea
-            name="body"
+          <JoditEditor
+            ref={editor}
             value={formData.body}
-            onChange={handleChange}
-            className="p-2 border rounded w-full resize-none aspect-[6/1] outline-none text-black"
+            onChange={handleBodyChange}
+            config={config}
+            className="bg-white"
           />
         </label>
       </div>
