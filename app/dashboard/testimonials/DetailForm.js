@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
+import ConfirmationModal from '../../../components/ConfirmationModal';
 
 export default function DetailForm() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function DetailForm() {
   const [section, setSection] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (pathname) {
@@ -105,6 +107,10 @@ export default function DetailForm() {
   };
 
   const handleDelete = async () => {
+    setIsModalOpen(true); // Open the modal
+  };
+
+  const confirmDelete = async () => {
     try {
       const response = await fetch(`/api/testimony/${params.id}`, {
         method: 'DELETE',
@@ -116,7 +122,13 @@ export default function DetailForm() {
       }
     } catch (error) {
       console.error('Error deleting testimony:', error);
+    } finally {
+      setIsModalOpen(false); // Close the modal
     }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false); // Close the modal
   };
 
   return (
@@ -200,6 +212,11 @@ export default function DetailForm() {
           </button>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onConfirm={confirmDelete}
+      />
     </form>
   );
 }
