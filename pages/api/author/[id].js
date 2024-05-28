@@ -18,10 +18,10 @@ export default async function handler(req, res) {
     }
   } else if (req.method === 'PUT') {
     try {
-      const { title, authorImage, excerpt } = req.body;
+      const { name, image, slug, description } = req.body;
       const updatedAuthor = await Author.findByIdAndUpdate(
         id,
-        { title, authorImage, excerpt },
+        { name, image, slug, description },
         { new: true, runValidators: true }
       );
       if (!updatedAuthor) {

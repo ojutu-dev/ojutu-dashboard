@@ -3,6 +3,7 @@
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useContent } from '../../../context/ContentContext';
+import ConfirmationModal from '../../../components/ConfirmationModal';
 
 export default function KeywordDetailForm() {
   const router = useRouter();
@@ -11,10 +12,12 @@ export default function KeywordDetailForm() {
   const { content, addItem, updateItem, deleteItem } = useContent();
   const [formData, setFormData] = useState({
     id: Date.now(),
-    name: '',
+    title: '',
+    description: '',
   });
   const [section, setSection] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (pathname) {
@@ -26,27 +29,56 @@ export default function KeywordDetailForm() {
 
   useEffect(() => {
     if (params.id && section) {
-      const item = content[section]?.find((item) => item.id === parseInt(params.id));
-      if (item) {
-        setFormData(item);
-        setIsEditing(true);
-      }
+      const fetchKeyword = async () => {
+        try {
+          const response = await fetch(`/api/keywords/${params.id}`);
+          const data = await response.json();
+          if (data) {
+            setFormData(data);
+            setIsEditing(true);
+          }
+        } catch (error) {
+          console.error('Error fetching keyword:', error);
+        }
+      };
+
+      fetchKeyword();
     }
-  }, [params.id, section, content]);
+  }, [params.id, section]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isEditing) {
-      updateItem(section, formData.id, formData);
-    } else {
-      addItem(section, formData);
+    const method = isEditing ? 'PUT' : 'POST';
+    const url = isEditing ? `/api/keywords/${params.id}` : '/api/keywords';
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        const keyword = await response.json();
+        if (isEditing) {
+          updateItem(section, keyword.id, keyword);
+        } else {
+          addItem(section, keyword);
+        }
+        router.push(`/dashboard/${section}`);
+      } else {
+        console.error('Failed to save keyword');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
     }
-    router.push(`/dashboard/${section}`);
   };
 
   const handleCancel = () => {
@@ -54,45 +86,78 @@ export default function KeywordDetailForm() {
   };
 
   const handleDelete = () => {
-    deleteItem(section, formData.id);
-    router.push(`/dashboard/${section}`);
+    setIsModalOpen(true); // Open the modal
+  };
+
+  const confirmDelete = async () => {
+    try {
+      const response = await fetch(`/api/keywords/${params.id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        deleteItem(section, formData.id);
+        router.push(`/dashboard/${section}`);
+      } else {
+        console.error('Failed to delete keyword');
+      }
+    } catch (error) {
+      console.error('Error deleting keyword:', error);
+    } finally {
+      setIsModalOpen(false); // Close the modal
+    }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false); // Close the modal
   };
 
   return (
     <form onSubmit={handleSubmit}>
-
-
       <div className='mb-8'>
-      <h2 className='text-2xl font-bold'>Keyword:</h2>
-          {formData.name && <div className="text-lg font-bold">{formData.name}</div>}
+        <h2 className='text-2xl font-bold'>Keyword:</h2>
+        {formData.title && <div className="text-lg font-bold">{formData.title}</div>}
       </div>
-
-
       <div>
         <label>
-          Name:
+          Title:
           <input
             type="text"
-            name="name"
-            value={formData.name}
+            name="title"
+            value={formData.title}
             onChange={handleChange}
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>
       </div>
+      <div className="mt-4">
+        <label>
+          Description:
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            className="p-2 border rounded w-full outline-none text-black resize-none aspect-[6/1]"
+          />
+        </label>
+      </div>
       <div className="flex space-x-2 mt-4">
-        <button type="submit" className="bg-blue-500 text-white p-2 rounded">
+        <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">
           {isEditing ? 'Update' : 'Publish'}
         </button>
-        <button type="button" onClick={handleCancel} className="bg-gray-500 text-white p-2 rounded">
+        <button type="button" onClick={handleCancel} className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded">
           Cancel
         </button>
         {isEditing && (
-          <button type="button" onClick={handleDelete} className="bg-red-500 text-white p-2 rounded">
+          <button type="button" onClick={handleDelete} className="bg-red-500 hover:bg-red-600 text-white p-2 rounded">
             Delete
           </button>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onConfirm={confirmDelete}
+      />
     </form>
   );
 }

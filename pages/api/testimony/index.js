@@ -28,7 +28,6 @@ export default async function handler(req, res) {
         folder: 'ojutu',
       });
 
-      // Create new Testimony document
       const testimony = new Testimony({
         title,
         work,
@@ -37,7 +36,6 @@ export default async function handler(req, res) {
         content,
       });
 
-      // Save to the database
       await testimony.save();
 
       res.status(201).json(testimony);

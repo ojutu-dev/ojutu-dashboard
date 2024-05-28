@@ -1,8 +1,10 @@
 'use client';
 
 import { useRouter, usePathname, useParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useContent } from '../../../context/ContentContext';
+import JoditEditor from 'jodit-react';
+import ConfirmationModal from '../../../components/ConfirmationModal';
 
 export default function DetailForm() {
   const router = useRouter();
@@ -17,9 +19,9 @@ export default function DetailForm() {
     featuredImage: null,
     ogImage: null,
     description: '',
-    categories: [],
-    authors: [],
-    body: '',
+    categoryId: '',
+    authorId: '',
+    body: '', 
   });
   const [section, setSection] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -28,6 +30,8 @@ export default function DetailForm() {
   const [ogImagePreview, setOgImagePreview] = useState(null);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [authorOptions, setAuthorOptions] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
+  const editor = useRef(null);
 
   useEffect(() => {
     if (pathname) {
@@ -39,35 +43,67 @@ export default function DetailForm() {
 
   useEffect(() => {
     if (params.id && section) {
-      const item = content[section]?.find((item) => item.id === parseInt(params.id));
-      if (item) {
-        setFormData(item);
-        setHeaderImagePreview(item.headerImage);
-        setFeaturedImagePreview(item.featuredImage);
-        setOgImagePreview(item.ogImage);
-        setIsEditing(true);
-      }
+      // Fetch the existing post data when in editing mode
+      const fetchPostData = async () => {
+        try {
+          const response = await fetch(`/api/post/${params.id}`);
+          const data = await response.json();
+          console.log('Fetched post data:', data); // Debugging log
+          if (response.ok) {
+            setFormData({
+              id: data._id,
+              title: data.title,
+              slug: data.slug,
+              headerImage: data.headerImage,
+              featuredImage: data.featuredImage,
+              ogImage: data.ogImage,
+              description: data.description,
+              categoryId: data.category._id,
+              authorId: data.author._id,
+              body: Array.isArray(data.body) ? data.body.join('') : data.body || '', // Convert body to string
+            });
+            setHeaderImagePreview(data.headerImage);
+            setFeaturedImagePreview(data.featuredImage);
+            setOgImagePreview(data.ogImage);
+            setIsEditing(true);
+          } else {
+            console.error('Failed to fetch post data:', data);
+          }
+        } catch (error) {
+          console.error('Error fetching post data:', error);
+        }
+      };
+      fetchPostData();
     }
-  }, [params.id, section, content]);
+  }, [params.id, section]);
 
   useEffect(() => {
-    // Fetch categories and authors data and set options
     const fetchCategoryOptions = async () => {
-      // Example: Fetch categories from your API or context
-      // const categoriesData = await fetchCategories();
-      // setCategoryOptions(categoriesData);
-      // For now, using sample data
-      const categoriesData = ['Category 1', 'Category 2', 'Category 3'];
-      setCategoryOptions(categoriesData);
+      try {
+        const response = await fetch('/api/category');
+        const data = await response.json();
+        if (data.length > 0) {
+          setCategoryOptions(data);
+        } else {
+          console.error('Failed to fetch categories');
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
     };
 
     const fetchAuthorOptions = async () => {
-      // Example: Fetch authors from your API or context
-      // const authorsData = await fetchAuthors();
-      // setAuthorOptions(authorsData);
-      // For now, using sample data
-      const authorsData = ['Author 1', 'Author 2', 'Author 3'];
-      setAuthorOptions(authorsData);
+      try {
+        const response = await fetch('/api/author');
+        const data = await response.json();
+        if (data.success) {
+          setAuthorOptions(data.data);
+        } else {
+          console.error('Failed to fetch authors');
+        }
+      } catch (error) {
+        console.error('Error fetching authors:', error);
+      }
     };
 
     fetchCategoryOptions();
@@ -76,50 +112,71 @@ export default function DetailForm() {
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    if (name === 'headerImage') {
+    if (files && files.length > 0) {
       const file = files[0];
-      setFormData({ ...formData, headerImage: file });
-
       const reader = new FileReader();
       reader.onloadend = () => {
-        setHeaderImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    } else if (name === 'featuredImage') {
-      const file = files[0];
-      setFormData({ ...formData, featuredImage: file });
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFeaturedImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    } else if (name === 'ogImage') {
-      const file = files[0];
-      setFormData({ ...formData, ogImage: file });
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setOgImagePreview(reader.result);
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          [name]: reader.result,
+        }));
+        if (name === 'headerImage') setHeaderImagePreview(reader.result);
+        if (name === 'featuredImage') setFeaturedImagePreview(reader.result);
+        if (name === 'ogImage') setOgImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        [name]: value,
+      }));
     }
   };
 
   const handleSlugGeneration = () => {
-    setFormData({ ...formData, slug: formData.title.toLowerCase().replace(/\s+/g, '-') });
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      slug: prevFormData.title.toLowerCase().replace(/\s+/g, '-'),
+    }));
   };
 
-  const handleSubmit = (e) => {
+  const handleBodyChange = (value) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      body: value || '', // Ensure body is always a string
+    }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isEditing) {
-      updateItem(section, formData.id, formData);
-    } else {
-      addItem(section, formData);
+    const method = isEditing ? 'PUT' : 'POST';
+    const url = isEditing ? `/api/post/${params.id}` : '/api/post';
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorResponse = await response.json();
+        console.error('Failed to save post:', errorResponse);
+        return;
+      }
+
+      const post = await response.json();
+      if (isEditing) {
+        updateItem(section, post.id, post);
+      } else {
+        addItem(section, post);
+      }
+      router.push(`/dashboard/${section}`);
+    } catch (error) {
+      console.error('Error submitting form:', error);
     }
-    router.push(`/dashboard/${section}`);
   };
 
   const handleCancel = () => {
@@ -127,19 +184,75 @@ export default function DetailForm() {
   };
 
   const handleDelete = () => {
-    deleteItem(section, formData.id);
-    router.push(`/dashboard/${section}`);
+    setIsModalOpen(true); // Open the modal
   };
-  
+
+  const confirmDelete = async () => {
+    try {
+      const response = await fetch(`/api/post/${params.id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        deleteItem(section, formData.id);
+        router.push(`/dashboard/${section}`);
+      } else {
+        console.error('Failed to delete post');
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    } finally {
+      setIsModalOpen(false); // Close the modal
+    }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false); // Close the modal
+  };
+
+  const config = useMemo(
+    () => ({
+      toolbarAdaptive: false,
+      buttons: 'paragraph,|,bold,italic,ul,paste,selectall,file,image',
+      uploader: {
+        insertImageAsBase64URI: true,
+        imagesExtensions: ['jpg', 'png', 'jpeg', 'gif'],
+        url: '/api/upload',
+        format: 'json',
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer your-access-token',
+        },
+        filesVariableName: function (t) {
+          return 'files[' + t + ']';
+        },
+        process: function (resp) {
+          return {
+            files: resp.files.map(function (file) {
+              return {
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                url: file.url,
+                thumb: file.url,
+                error: file.error,
+              };
+            }),
+            path: resp.path,
+            baseurl: resp.baseurl,
+          };
+        },
+      },
+      placeholder: 'Start typing...',
+    }),
+    []
+  );
 
   return (
     <form onSubmit={handleSubmit}>
-
       <div className='mb-8'>
-      <h2 className='text-2xl font-bold'>Post:</h2>
-      {formData.title && <div className="text-lg font-bold">{formData.title}</div>}
+        <h2 className='text-2xl font-bold'>Post:</h2>
+        {formData.title && <div className="text-lg font-bold">{formData.title}</div>}
       </div>
-
       <div>
         <label>
           Title:
@@ -163,7 +276,7 @@ export default function DetailForm() {
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>
-        <button type="button" onClick={handleSlugGeneration} className="ml-2 p-2 bg-blue-500 text-white rounded">
+        <button type="button" onClick={handleSlugGeneration} className="ml-2 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded">
           Generate Slug
         </button>
       </div>
@@ -221,14 +334,14 @@ export default function DetailForm() {
         <label>
           Category:
           <select
-            name="category"
-            value={formData.category}
+            name="categoryId"
+            value={formData.categoryId}
             onChange={handleChange}
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Category</option>
-            {categoryOptions.map((category, index) => (
-              <option key={index} value={category}>{category}</option>
+            {categoryOptions.map((category) => (
+              <option key={category._id} value={category._id}>{category.title}</option>
             ))}
           </select>
         </label>
@@ -237,14 +350,14 @@ export default function DetailForm() {
         <label>
           Author:
           <select
-            name="author"
-            value={formData.author}
+            name="authorId"
+            value={formData.authorId}
             onChange={handleChange}
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Author</option>
-            {authorOptions.map((author, index) => (
-              <option key={index} value={author}>{author}</option>
+            {authorOptions.map((author) => (
+              <option key={author._id} value={author._id}>{author.name}</option>
             ))}
           </select>
         </label>
@@ -252,27 +365,33 @@ export default function DetailForm() {
       <div className="mt-4">
         <label>
           Body:
-          <textarea
-            name="body"
+          <JoditEditor
+            ref={editor}
             value={formData.body}
-            onChange={handleChange}
-            className="p-2 border rounded w-full outline-none text-black resize-none aspect-[6/1]"
+            onChange={handleBodyChange}
+            config={config}
+            className="bg-white"
           />
         </label>
       </div>
       <div className="flex space-x-2 mt-4">
-        <button type="submit" className="bg-blue-500 text-white p-2 rounded">
+        <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">
           {isEditing ? 'Update' : 'Publish'}
         </button>
-        <button  type="button" onClick={handleCancel} className="bg-gray-500 text-white p-2 rounded">
+        <button type="button" onClick={handleCancel} className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded">
           Cancel
         </button>
         {isEditing && (
-          <button type="button" onClick={handleDelete} className="bg-red-500 text-white p-2 rounded">
+          <button type="button" onClick={handleDelete} className="bg-red-500 hover:bg-red-600 text-white p-2 rounded">
             Delete
           </button>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onConfirm={confirmDelete}
+      />
     </form>
   );
 }

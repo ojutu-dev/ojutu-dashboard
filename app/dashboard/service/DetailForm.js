@@ -3,12 +3,13 @@
 import { useRouter, usePathname, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useContent } from "../../../context/ContentContext";
+import ConfirmationModal from "../../../components/ConfirmationModal";
 
 export default function ServiceDetailForm() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
-  
+
   const { content, addItem, updateItem, deleteItem } = useContent();
   const [formData, setFormData] = useState({
     id: Date.now(),
@@ -17,6 +18,7 @@ export default function ServiceDetailForm() {
   });
   const [section, setSection] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (pathname) {
@@ -29,11 +31,28 @@ export default function ServiceDetailForm() {
   useEffect(() => {
     if (params.id && section) {
       const item = content[section]?.find(
-        (item) => item.id === parseInt(params.id)
+        (item) => item.id === params.id
       );
       if (item) {
         setFormData(item);
         setIsEditing(true);
+      } else {
+        const fetchService = async () => {
+          try {
+            const response = await fetch(`/api/service/${params.id}`);
+            if (response.ok) {
+              const service = await response.json();
+              setFormData(service);
+              setIsEditing(true);
+            } else {
+              console.error("Failed to fetch service:", response.statusText);
+            }
+          } catch (error) {
+            console.error("Error fetching service:", error);
+          }
+        };
+
+        fetchService();
       }
     }
   }, [params.id, section, content]);
@@ -43,33 +62,92 @@ export default function ServiceDetailForm() {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-
     if (isEditing) {
-      updateItem(section, formData.id, formData);
+      try {
+        const response = await fetch(`/api/service/${formData._id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (response.ok) {
+          const updatedService = await response.json();
+          updateItem(section, formData._id, updatedService);
+          router.push(`/dashboard/${section}`);
+        } else {
+          const errorData = await response.json();
+          console.error("Failed to update service:", errorData);
+        }
+      } catch (error) {
+        console.error("Error updating service:", error);
+      }
     } else {
-      addItem(section, formData);
+      try {
+        const response = await fetch("/api/service", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        });
+
+        if (response.ok) {
+          const newService = await response.json();
+          addItem(section, newService);
+          router.push(`/dashboard/${section}`);
+        } else {
+          const errorData = await response.json();
+          console.error("Failed to create service:", errorData);
+        }
+      } catch (error) {
+        console.error("Error creating service:", error);
+      }
     }
-    router.push(`/dashboard/${section}`);
   };
 
   const handleCancel = () => {
     router.back();
   };
 
-  const handleDelete = () => {
-    deleteItem(section, formData.id);
-    router.push(`/dashboard/${section}`);
+  const handleDelete = async () => {
+    setIsModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      const response = await fetch(`/api/service/${formData._id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        deleteItem(section, formData._id);
+        router.push(`/dashboard/${section}`);
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to delete service:", errorData);
+      }
+    } catch (error) {
+      console.error("Error deleting service:", error);
+    } finally {
+      setIsModalOpen(false);
+    }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-8">
         <h2 className="text-2xl font-bold">Service:</h2>
-        {formData.name && (
-          <div className="text-lg font-bold">{formData.name}</div>
+        {formData.title && (
+          <div className="text-lg font-bold">{formData.title}</div>
         )}
       </div>
 
@@ -78,7 +156,7 @@ export default function ServiceDetailForm() {
           Name:
           <input
             type="text"
-            name="name"
+            name="title"
             value={formData.title}
             onChange={handleChange}
             className="p-2 border rounded w-full outline-none text-black"
@@ -98,13 +176,13 @@ export default function ServiceDetailForm() {
       </div>
 
       <div className="flex space-x-2 mt-4">
-        <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-          {isEditing ? "Update" : "Submit"}
+        <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">
+          {isEditing ? "Update" : "Publish"}
         </button>
         <button
           type="button"
           onClick={handleCancel}
-          className="bg-gray-500 text-white p-2 rounded"
+          className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded"
         >
           Cancel
         </button>
@@ -112,12 +190,17 @@ export default function ServiceDetailForm() {
           <button
             type="button"
             onClick={handleDelete}
-            className="bg-red-500 text-white p-2 rounded"
+            className="bg-red-500 hover:bg-red-600 text-white p-2 rounded"
           >
             Delete
           </button>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onConfirm={confirmDelete}
+      />
     </form>
   );
 }

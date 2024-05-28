@@ -1,51 +1,51 @@
-// NextAuth configuration
-import connectToMongoDB  from "../../../libs/mongodb";
-import User from "../../../model/user";
-import NextAuth from "next-auth/next";
-import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
 
-export const authOptions = {
+import NextAuth from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import bcrypt from 'bcryptjs';
+import connectToMongoDB from '../../../libs/mongodb';
+import User from '../../../model/user';
+
+export default NextAuth({
   providers: [
     CredentialsProvider({
-      id: "credentials",
-      name: "Credentials",
+      name: 'Credentials',
       credentials: {
-        email: { label: "Email", type: "text" },
-        username: { label: "Username", type: "username" },
-        password: { label: "Password", type: "password" },
+        username: { label: 'Username', type: 'text' },
+        password: { label: 'Password', type: 'password' },
       },
-
       async authorize(credentials) {
         await connectToMongoDB(process.env.MONGODB_URI);
 
-        // const { username, password } = credentials;
-
-        try {
-          const user = await User.findOne({ email: credentials.email});
-
-          if (user) {
-
-            const isPasswordCorrect = await bcrypt.compare(
-              credentials.password,
-              user.password
-            );
-            if (isPasswordCorrect) {
-              return user;
-          }
-
-         
-        } 
-      } catch (error) {
-          console.error("Error: ", error);
-          throw new Error("An error occurred during authentication", error);
+        const user = await User.findOne({ username: credentials.username });
+        if (!user) {
+          throw new Error('No user found');
         }
+
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isValid) {
+          throw new Error('Invalid password');
+        }
+
+        return { id: user._id, username: user.username };
       },
     }),
   ],
- 
-};
+  session: {
+    jwt: true,
+    maxAge: 60 * 60, // 10 minutes
+  },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      session.user.id = token.id;
+      return session;
+    },
+  },
+});
 
-const handler = NextAuth(authOptions);
 
-export default handler;
