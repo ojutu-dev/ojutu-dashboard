@@ -1,7 +1,5 @@
 'use client';
 
-import Header from '../../../components/Header';
-import Sidebar from '../../../components/Sidebar';
 import MainContent from '../../../components/MainContent';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -56,14 +54,16 @@ export default function Section() {
 
   return (
     <div className="flex">
-      <Sidebar />
       <div className="flex flex-col w-full">
-        <Header />
         <MainContent>
           <div>
             <h2>{`Content for ${section.charAt(0).toUpperCase() + section.slice(1)}`}</h2>
-            <ul>
-              {portolios.map((item) => (
+            {loading ? (
+                <div className="grid place-content-center h-[50vh] w-full">
+                  Loading...
+                </div>
+              ) : (
+                portolios.map((item) => (
                 <li
                   key={item._id}
                   className="flex items-center border p-2 my-2 cursor-pointer"
@@ -72,8 +72,8 @@ export default function Section() {
                   {item.mainImage && <Image src={item.mainImage} alt={item.title} width={50} height={50} className="w-16 h-16 object-cover mr-4" />}
                   <h3>{item.title}</h3>
                 </li>
-              ))}
-            </ul>
+                ))
+              )}
           </div>
         </MainContent>
       </div>

@@ -176,13 +176,13 @@ export default function ServiceDetailForm() {
       </div>
 
       <div className="flex space-x-2 mt-4">
-        <button type="submit" className="bg-blue-500 text-white p-2 rounded">
+        <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">
           {isEditing ? "Update" : "Publish"}
         </button>
         <button
           type="button"
           onClick={handleCancel}
-          className="bg-gray-500 text-white p-2 rounded"
+          className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded"
         >
           Cancel
         </button>
@@ -190,7 +190,7 @@ export default function ServiceDetailForm() {
           <button
             type="button"
             onClick={handleDelete}
-            className="bg-red-500 text-white p-2 rounded"
+            className="bg-red-500 hover:bg-red-600 text-white p-2 rounded"
           >
             Delete
           </button>

@@ -1,7 +1,5 @@
 'use client';
 
-import Header from '../../../components/Header';
-import Sidebar from '../../../components/Sidebar';
 import MainContent from '../../../components/MainContent';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -43,7 +41,7 @@ export default function Section() {
     fetchBrands();
   }, []);
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return <p className='grid place-content-center w-full h-[50vh]'>Loading...</p>;
   if (error) return <p>{error}</p>;
 
   const handleItemClick = (id) => {
@@ -52,9 +50,7 @@ export default function Section() {
 
   return (
     <div className="flex">
-      <Sidebar />
       <div className="flex flex-col w-full">
-        <Header />
         <MainContent>
           <div>
             <h2>{`Content for ${section.charAt(0).toUpperCase() + section.slice(1)}`}</h2>
