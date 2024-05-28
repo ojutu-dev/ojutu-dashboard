@@ -1,48 +1,51 @@
+
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import bcrypt from 'bcryptjs';
 import connectToMongoDB from '../../../libs/mongodb';
 import User from '../../../model/user';
-import bcrypt from 'bcryptjs';
 
 export default NextAuth({
   providers: [
     CredentialsProvider({
       name: 'Credentials',
+      credentials: {
+        username: { label: 'Username', type: 'text' },
+        password: { label: 'Password', type: 'password' },
+      },
       async authorize(credentials) {
         await connectToMongoDB(process.env.MONGODB_URI);
 
-        const user = await User.findOne({ email: credentials.email });
+        const user = await User.findOne({ username: credentials.username });
         if (!user) {
-          throw new Error('No user found with the email');
+          throw new Error('No user found');
         }
 
         const isValid = await bcrypt.compare(credentials.password, user.password);
         if (!isValid) {
-          throw new Error('Incorrect password');
+          throw new Error('Invalid password');
         }
 
-        return { id: user._id, username: user.username, email: user.email };
-      }
-    })
+        return { id: user._id, username: user.username };
+      },
+    }),
   ],
   session: {
     jwt: true,
-    maxAge: 10 * 60,  // 10 minutes
-    updateAge: 10 * 60,  // Force update every 10 minutes to refresh expiry
-  },
-  jwt: {
-    secret: process.env.JWT_SECRET,
+    maxAge: 60 * 60, // 10 minutes
   },
   callbacks: {
-    async jwt(token, user) {
+    async jwt({ token, user }) {
       if (user) {
-        token.user = user;
+        token.id = user.id;
       }
       return token;
     },
-    async session(session, token) {
-      session.user = token.user;
+    async session({ session, token }) {
+      session.user.id = token.id;
       return session;
-    }
-  }
+    },
+  },
 });
+
+

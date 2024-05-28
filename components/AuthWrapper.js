@@ -1,19 +1,22 @@
-import { useEffect } from 'react';
-import { getSession } from 'next-auth/react';
+'use client';
+
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function AuthWrapper({ children }) {
+  const { status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    const checkSession = async () => {
-      const session = await getSession();
-      if (!session) {
-        router.replace("/login");
-      }
-    };
-    checkSession();
-  }, [router]);
+    if (status === 'unauthenticated') {
+      router.replace('/login');
+    }
+  }, [status, router]);
+
+  if (status === 'loading') {
+    return <div>Loading...</div>
+  }
 
   return children;
 }

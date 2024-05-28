@@ -90,12 +90,12 @@ export default function RegisterForm() {
             placeholder="Password"
             className="p-4 "
           />
-          <button className="bg-black text-white font-bold cursor-pointer mt-4 px-6 py-2">
+          <button className="text-white bg-blue-500 rounded hover:bg-blue-600 font-bold cursor-pointer mt-4 px-6 py-2">
             Register
           </button>
 
           {error && (
-            <div className="bg-black text-white w-fit text-sm py-1 px-3 rounded-md mt-2">
+            <div className="text-white bg-blue-500 rounded hover:bg-blue-600 w-fit text-sm py-1 px-3 mt-2">
               {error}
             </div>
           )}

@@ -8,7 +8,9 @@ export default function ClientProviders({ children }) {
   return (
     <SessionProvider>
       <ContentProvider>
-        <AuthWrapper>{children}</AuthWrapper>
+        <AuthWrapper>
+          {children}
+        </AuthWrapper>
       </ContentProvider>
     </SessionProvider>
   );
