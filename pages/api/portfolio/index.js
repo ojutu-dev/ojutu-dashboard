@@ -19,66 +19,42 @@ export default async function handler(req, res) {
       const portfolios = await Portfolio.find().populate('brand').populate('service').populate('keywords');
       res.status(200).json({ success: true, data: portfolios });
     } catch (error) {
+      console.error('Error fetching portfolios:', error);
       res.status(500).json({ message: 'Error fetching portfolios', error });
     }
   } else if (req.method === 'POST') {
-    const {
-      title,
-      company,
-      slug,
-      address,
-      ogdescription,
-      body,
-      serviceId,
-      brandId,
-      keywordsId,
-      featuredImage,
-      headerImage,
-      mainImage,
-      otherImage,
-      ogImage,
-    } = req.body;
-    const brand = await Brand.findById(brandId);
-    const keywords = await Keywords.findById(keywordsId);
-    const service = await Service.findById(serviceId);
-
-    if (!brand) {
-      throw new Error(`Brand with ID ${brandId} not found`);
-    }
-
-    if (!keywords) {
-      throw new Error(`Keywords with ID ${keywordsId} not found`);
-    }
-    if (!service) {
-      throw new Error(`Service with ID ${serviceId} not found`);
-    }
+    const { title, company, slug, address, ogdescription, body, serviceId, brandId, keywords, mainImage, headerImage, otherImage, ogImage } = req.body;
     try {
-      let featuredImageUrl, headerImageUrl, mainImageUrl, otherImageUrl, ogImageUrl;
+      console.log('Received portfolio data:', req.body);
 
-      if (featuredImage) {
-        const uploadResponse = await cloudinary.uploader.upload(featuredImage, { folder: 'portfolio' });
-        featuredImageUrl = uploadResponse.secure_url;
+      const brand = await Brand.findById(brandId);
+      const keywordsData = await Keywords.find({ _id: { $in: keywords } });
+      const service = await Service.findById(serviceId);
+
+      if (!brand) {
+        throw new Error('Invalid brand ID');
+      }
+      if (!keywordsData.length) {
+        throw new Error('Invalid keywords');
+      }
+      if (!service) {
+        throw new Error('Invalid service ID');
       }
 
-      if (headerImage) {
-        const uploadResponse = await cloudinary.uploader.upload(headerImage, { folder: 'portfolio' });
-        headerImageUrl = uploadResponse.secure_url;
-      }
+      const uploadBase64Image = async (base64Image) => {
+        if (base64Image) {
+          const uploadResult = await cloudinary.uploader.upload(base64Image, { folder: 'portfolio' });
+          return uploadResult.secure_url;
+        }
+        return null;
+      };
 
-      if (mainImage) {
-        const uploadResponse = await cloudinary.uploader.upload(mainImage, { folder: 'portfolio' });
-        mainImageUrl = uploadResponse.secure_url;
-      }
-
-      if (otherImage) {
-        const uploadResponse = await cloudinary.uploader.upload(otherImage, { folder: 'portfolio' });
-        otherImageUrl = uploadResponse.secure_url;
-      }
-
-      if (ogImage) {
-        const uploadResponse = await cloudinary.uploader.upload(ogImage, { folder: 'portfolio' });
-        ogImageUrl = uploadResponse.secure_url;
-      }
+      const [mainImageUrl, headerImageUrl, otherImageUrl, ogImageUrl] = await Promise.all([
+        uploadBase64Image(mainImage),
+        uploadBase64Image(headerImage),
+        uploadBase64Image(otherImage),
+        uploadBase64Image(ogImage),
+      ]);
 
       const newPortfolio = new Portfolio({
         title,
@@ -87,12 +63,11 @@ export default async function handler(req, res) {
         address,
         ogdescription,
         body,
-        category,
-        brand,
+        service: serviceId,
+        brand: brandId,
         keywords,
-        featuredImage: featuredImageUrl,
-        headerImage: headerImageUrl,
         mainImage: mainImageUrl,
+        headerImage: headerImageUrl,
         otherImage: otherImageUrl,
         ogImage: ogImageUrl,
       });
@@ -100,7 +75,8 @@ export default async function handler(req, res) {
       await newPortfolio.save();
       res.status(201).json({ success: true, data: newPortfolio });
     } catch (error) {
-      res.status(500).json({ message: 'Error creating portfolio', error });
+      console.error('Error creating portfolio:', error);
+      res.status(500).json({ message: 'Error creating portfolio', error: error.message });
     }
   } else {
     res.status(405).json({ message: 'Method not allowed' });

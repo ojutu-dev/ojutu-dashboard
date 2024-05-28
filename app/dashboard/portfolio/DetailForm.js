@@ -1,10 +1,7 @@
-'use client';
-
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useContent } from '../../../context/ContentContext';
 import JoditEditor from 'jodit-react';
-import axios from 'axios';
 import ConfirmationModal from '../../../components/ConfirmationModal';
 
 export default function DetailForm() {
@@ -17,12 +14,14 @@ export default function DetailForm() {
     title: '',
     company: '',
     slug: '',
-    category: '',
-    brand: '',
+    categoryId: '',
+    brandId: '',
+    serviceId: '',
     mainImage: null,
     headerImage: null,
     otherImage: null,
-    description: '',
+    ogdescription: '',
+    address: '',
     keywords: [],
     body: '',
   });
@@ -33,8 +32,10 @@ export default function DetailForm() {
   const [otherImagePreview, setOtherImagePreview] = useState(null);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [brandOptions, setBrandOptions] = useState([]);
+  const [serviceOptions, setServiceOptions] = useState([]);
   const [keywordOptions, setKeywordOptions] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
   const editor = useRef(null);
 
   useEffect(() => {
@@ -47,30 +48,46 @@ export default function DetailForm() {
 
   useEffect(() => {
     if (params.id && section) {
-      const item = content[section]?.find((item) => item.id === parseInt(params.id));
-      if (item) {
-        setFormData(item);
-        setMainImagePreview(item.mainImage);
-        setHeaderImagePreview(item.headerImage);
-        setOtherImagePreview(item.otherImage);
-        setIsEditing(true);
-      }
+      const fetchItem = async () => {
+        try {
+          const response = await fetch(`/api/portfolio/${params.id}`);
+          const item = await response.json();
+          if (response.ok) {
+            setFormData({
+              ...item,
+              categoryId: item.service?._id || '',
+              brandId: item.brand?._id || '',
+              serviceId: item.service?._id || '',
+              keywords: item.keywords?.map(k => k._id) || [],
+              body: Array.isArray(item.body) ? item.body.join('') : item.body || '', // Ensure body is a string
+            });
+            setMainImagePreview(item.mainImage);
+            setHeaderImagePreview(item.headerImage);
+            setOtherImagePreview(item.otherImage);
+            setIsEditing(true);
+          } else {
+            console.error('Failed to fetch item:', item);
+          }
+        } catch (error) {
+          console.error('Error fetching item:', error);
+        }
+      };
+      fetchItem();
     }
-  }, [params.id, section, content]);
+  }, [params.id, section]);
 
   useEffect(() => {
     const fetchCategoryOptions = async () => {
       try {
         const response = await fetch('/api/service');
         const data = await response.json();
-        console.log('Fetched service:', data);
         if (data.success !== false) {
           setCategoryOptions(data.data || data);
         } else {
           console.error('Failed to fetch services');
         }
       } catch (error) {
-        console.error('Error fetching service:', error);
+        console.error('Error fetching services:', error);
       }
     };
 
@@ -78,7 +95,6 @@ export default function DetailForm() {
       try {
         const response = await fetch('/api/brand');
         const data = await response.json();
-        console.log('Fetched brands:', data);
         if (data.success !== false) {
           setBrandOptions(data.data || data);
         } else {
@@ -89,11 +105,24 @@ export default function DetailForm() {
       }
     };
 
+    const fetchServiceOptions = async () => {
+      try {
+        const response = await fetch('/api/service');
+        const data = await response.json();
+        if (data.success !== false) {
+          setServiceOptions(data.data || data);
+        } else {
+          console.error('Failed to fetch services');
+        }
+      } catch (error) {
+        console.error('Error fetching services:', error);
+      }
+    };
+
     const fetchKeywordOptions = async () => {
       try {
         const response = await fetch('/api/keywords');
         const data = await response.json();
-        console.log('Fetched keywords:', data);
         if (data.success !== false) {
           setKeywordOptions(data.data || data);
         } else {
@@ -106,36 +135,23 @@ export default function DetailForm() {
 
     fetchCategoryOptions();
     fetchBrandOptions();
+    fetchServiceOptions();
     fetchKeywordOptions();
   }, []);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    if (name === 'mainImage') {
+    if (files && files.length > 0) {
       const file = files[0];
-      setFormData({ ...formData, mainImage: file });
-
       const reader = new FileReader();
       reader.onloadend = () => {
-        setMainImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    } else if (name === 'headerImage') {
-      const file = files[0];
-      setFormData({ ...formData, headerImage: file });
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setHeaderImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    } else if (name === 'otherImage') {
-      const file = files[0];
-      setFormData({ ...formData, otherImage: file });
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setOtherImagePreview(reader.result);
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          [name]: reader.result,
+        }));
+        if (name === 'mainImage') setMainImagePreview(reader.result);
+        if (name === 'headerImage') setHeaderImagePreview(reader.result);
+        if (name === 'otherImage') setOtherImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
     } else if (name === 'keywords') {
@@ -156,39 +172,75 @@ export default function DetailForm() {
     setFormData({ ...formData, body: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isEditing) {
-      updateItem(section, formData.id, formData);
-    } else {
-      addItem(section, formData);
+
+    // Basic validation before submission
+    if (!formData.title || !formData.company || !formData.slug || !formData.categoryId || !formData.brandId || !formData.serviceId || !formData.keywords.length || !formData.address) {
+      console.error('Please fill in all required fields.');
+      return;
     }
-    router.push(`/dashboard/${section}`);
+
+    try {
+      const url = isEditing ? `/api/portfolio/${params.id}` : '/api/portfolio';
+      const method = isEditing ? 'PUT' : 'POST';
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error response from server:', errorData);
+        throw new Error('Failed to submit form');
+      }
+
+      const data = await response.json();
+      if (isEditing) {
+        updateItem(section, data._id, data);
+      } else {
+        addItem(section, data._id, data);
+      }
+
+      router.push(`/dashboard/${section}`);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    }
   };
 
   const handleCancel = () => {
     router.back();
   };
 
-  const handleDelete = () => {
-    deleteItem(section, formData.id);
-    router.push(`/dashboard/${section}`);
+  const handleDelete = (itemId) => {
+    setItemToDelete(itemId);
+    setIsModalOpen(true);
   };
 
-  const uploadHandler = async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
+  const confirmDelete = async () => {
     try {
-      const response = await axios.post('/api/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      const response = await fetch(`/api/portfolio/${itemToDelete}`, {
+        method: 'DELETE',
       });
-      return response.data.url; // URL of the uploaded image
+
+      if (!response.ok) {
+        throw new Error('Failed to delete item');
+      }
+
+      deleteItem(section, itemToDelete);
+      router.push(`/dashboard/${section}`);
     } catch (error) {
-      console.error('Error uploading file:', error);
-      return null;
+      console.error('Error deleting item:', error);
+    } finally {
+      setIsModalOpen(false);
     }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
   };
 
   const config = useMemo(
@@ -278,14 +330,14 @@ export default function DetailForm() {
         <label>
           Category:
           <select
-            name="category"
-            value={formData.category}
+            name="categoryId"
+            value={formData.categoryId}
             onChange={handleChange}
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Category</option>
             {categoryOptions.map((category, index) => (
-              <option key={index} value={category.title}>{category.title}</option>
+              <option key={index} value={category._id}>{category.title}</option>
             ))}
           </select>
         </label>
@@ -294,14 +346,30 @@ export default function DetailForm() {
         <label>
           Brand:
           <select
-            name="brand"
-            value={formData.brand}
+            name="brandId"
+            value={formData.brandId}
             onChange={handleChange}
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Brand</option>
             {brandOptions.map((brand, index) => (
-              <option key={index} value={brand.title}>{brand.title}</option>
+              <option key={index} value={brand._id}>{brand.title}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="mt-4">
+        <label>
+          Service:
+          <select
+            name="serviceId"
+            value={formData.serviceId}
+            onChange={handleChange}
+            className="p-2 border rounded w-full outline-none text-black"
+          >
+            <option value="">Select Service</option>
+            {serviceOptions.map((service, index) => (
+              <option key={index} value={service._id}>{service.title}</option>
             ))}
           </select>
         </label>
@@ -314,8 +382,8 @@ export default function DetailForm() {
               <input
                 type="checkbox"
                 name="keywords"
-                value={keyword.title}
-                checked={formData.keywords.includes(keyword.title)}
+                value={keyword._id}
+                checked={formData.keywords.includes(keyword._id)}
                 onChange={handleChange}
                 className="mr-2"
               />
@@ -365,10 +433,22 @@ export default function DetailForm() {
       </div>
       <div className="mt-4">
         <label>
+          Address:
+          <input
+            type="text"
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+            className="p-2 border rounded w-full outline-none text-black"
+          />
+        </label>
+      </div>
+      <div className="mt-4">
+        <label>
           Description:
           <textarea
-            name="description"
-            value={formData.description}
+            name="ogdescription"
+            value={formData.ogdescription}
             onChange={handleChange}
             className="p-2 border rounded w-full resize-none aspect-[6/1] outline-none text-black"
           />
@@ -391,7 +471,7 @@ export default function DetailForm() {
           {isEditing ? 'Update' : 'Publish'}
         </button>
         {isEditing && (
-          <button type="button" onClick={handleDelete} className="p-2 bg-red-500 text-white rounded">
+          <button type="button" onClick={() => handleDelete(params.id)} className="p-2 bg-red-500 text-white rounded">
             Delete
           </button>
         )}
@@ -399,6 +479,11 @@ export default function DetailForm() {
           Cancel
         </button>
       </div>
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onConfirm={confirmDelete}
+      />
     </form>
   );
 }
