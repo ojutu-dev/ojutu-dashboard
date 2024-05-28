@@ -4,7 +4,6 @@ import { useRouter, usePathname, useParams } from 'next/navigation';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useContent } from '../../../context/ContentContext';
 import JoditEditor from 'jodit-react';
-import axios from 'axios';
 import ConfirmationModal from '../../../components/ConfirmationModal';
 
 export default function DetailForm() {
@@ -20,9 +19,9 @@ export default function DetailForm() {
     featuredImage: null,
     ogImage: null,
     description: '',
-    categories: [],
-    authors: [],
-    body: '',
+    categoryId: '',
+    authorId: '',
+    body: '', // Ensure body is initialized as a string
   });
   const [section, setSection] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -44,23 +43,45 @@ export default function DetailForm() {
 
   useEffect(() => {
     if (params.id && section) {
-      const item = content[section]?.find((item) => item.id === parseInt(params.id));
-      if (item) {
-        setFormData(item);
-        setHeaderImagePreview(item.headerImage);
-        setFeaturedImagePreview(item.featuredImage);
-        setOgImagePreview(item.ogImage);
-        setIsEditing(true);
-      }
+      // Fetch the existing post data when in editing mode
+      const fetchPostData = async () => {
+        try {
+          const response = await fetch(`/api/post/${params.id}`);
+          const data = await response.json();
+          console.log('Fetched post data:', data); // Debugging log
+          if (response.ok) {
+            setFormData({
+              id: data._id,
+              title: data.title,
+              slug: data.slug,
+              headerImage: data.headerImage,
+              featuredImage: data.featuredImage,
+              ogImage: data.ogImage,
+              description: data.description,
+              categoryId: data.category._id,
+              authorId: data.author._id,
+              body: Array.isArray(data.body) ? data.body.join('') : data.body || '', // Convert body to string
+            });
+            setHeaderImagePreview(data.headerImage);
+            setFeaturedImagePreview(data.featuredImage);
+            setOgImagePreview(data.ogImage);
+            setIsEditing(true);
+          } else {
+            console.error('Failed to fetch post data:', data);
+          }
+        } catch (error) {
+          console.error('Error fetching post data:', error);
+        }
+      };
+      fetchPostData();
     }
-  }, [params.id, section, content]);
+  }, [params.id, section]);
 
   useEffect(() => {
     const fetchCategoryOptions = async () => {
       try {
         const response = await fetch('/api/category');
         const data = await response.json();
-        console.log('Fetched categories:', data);
         if (data.length > 0) {
           setCategoryOptions(data);
         } else {
@@ -75,7 +96,6 @@ export default function DetailForm() {
       try {
         const response = await fetch('/api/author');
         const data = await response.json();
-        console.log('Fetched authors:', data);
         if (data.success) {
           setAuthorOptions(data.data);
         } else {
@@ -92,44 +112,39 @@ export default function DetailForm() {
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    if (name === 'headerImage' && files) {
+    if (files && files.length > 0) {
       const file = files[0];
-      setFormData({ ...formData, headerImage: file });
-
       const reader = new FileReader();
       reader.onloadend = () => {
-        setHeaderImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    } else if (name === 'featuredImage' && files) {
-      const file = files[0];
-      setFormData({ ...formData, featuredImage: file });
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFeaturedImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    } else if (name === 'ogImage' && files) {
-      const file = files[0];
-      setFormData({ ...formData, ogImage: file });
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setOgImagePreview(reader.result);
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          [name]: reader.result,
+        }));
+        if (name === 'headerImage') setHeaderImagePreview(reader.result);
+        if (name === 'featuredImage') setFeaturedImagePreview(reader.result);
+        if (name === 'ogImage') setOgImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        [name]: value,
+      }));
     }
   };
 
   const handleSlugGeneration = () => {
-    setFormData({ ...formData, slug: formData.title.toLowerCase().replace(/\s+/g, '-') });
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      slug: prevFormData.title.toLowerCase().replace(/\s+/g, '-'),
+    }));
   };
 
   const handleBodyChange = (value) => {
-    setFormData({ ...formData, body: value });
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      body: value || '', // Ensure body is always a string
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -138,52 +153,27 @@ export default function DetailForm() {
     const url = isEditing ? `/api/post/${params.id}` : '/api/post';
 
     try {
-      const formDataToSend = { ...formData };
-      if (formData.headerImage instanceof File) {
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          formDataToSend.headerImage = reader.result;
-          await sendRequest();
-        };
-        reader.readAsDataURL(formData.headerImage);
-      } else if (formData.featuredImage instanceof File) {
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          formDataToSend.featuredImage = reader.result;
-          await sendRequest();
-        };
-        reader.readAsDataURL(formData.featuredImage);
-      } else if (formData.ogImage instanceof File) {
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          formDataToSend.ogImage = reader.result;
-          await sendRequest();
-        };
-        reader.readAsDataURL(formData.ogImage);
-      } else {
-        await sendRequest();
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorResponse = await response.json();
+        console.error('Failed to save post:', errorResponse);
+        return;
       }
 
-      async function sendRequest() {
-        const response = await fetch(url, {
-          method,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formDataToSend),
-        });
-        if (response.ok) {
-          const post = await response.json();
-          if (isEditing) {
-            updateItem(section, post.id, post);
-          } else {
-            addItem(section, post);
-          }
-          router.push(`/dashboard/${section}`);
-        } else {
-          console.error('Failed to save post');
-        }
+      const post = await response.json();
+      if (isEditing) {
+        updateItem(section, post.id, post);
+      } else {
+        addItem(section, post);
       }
+      router.push(`/dashboard/${section}`);
     } catch (error) {
       console.error('Error submitting form:', error);
     }
@@ -217,22 +207,6 @@ export default function DetailForm() {
 
   const closeModal = () => {
     setIsModalOpen(false); // Close the modal
-  };
-
-  const uploadHandler = async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const response = await axios.post('/api/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      return response.data.url; // URL of the uploaded image
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      return null;
-    }
   };
 
   const config = useMemo(
@@ -360,14 +334,14 @@ export default function DetailForm() {
         <label>
           Category:
           <select
-            name="categories"
-            value={formData.categories}
+            name="categoryId"
+            value={formData.categoryId}
             onChange={handleChange}
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Category</option>
             {categoryOptions.map((category) => (
-              <option key={category._id} value={category.title}>{category.title}</option>
+              <option key={category._id} value={category._id}>{category.title}</option>
             ))}
           </select>
         </label>
@@ -376,14 +350,14 @@ export default function DetailForm() {
         <label>
           Author:
           <select
-            name="authors"
-            value={formData.authors}
+            name="authorId"
+            value={formData.authorId}
             onChange={handleChange}
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Author</option>
             {authorOptions.map((author) => (
-              <option key={author._id} value={author.name}>{author.name}</option>
+              <option key={author._id} value={author._id}>{author.name}</option>
             ))}
           </select>
         </label>

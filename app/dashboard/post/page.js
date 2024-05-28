@@ -27,18 +27,15 @@ export default function Section() {
     }
   }, [pathname, content]);
 
-  
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         const response = await fetch('/api/post');
         const data = await response.json();
-
         if (data.success) {
           setPosts(data.data);
         } else {
           setError('Failed to fetch Posts');
-          console.log(error)
         }
       } catch (err) {
         setError('An error occurred while fetching Posts');
@@ -65,20 +62,28 @@ export default function Section() {
             <ul>
               {loading ? (
                 <div className="flex justify-center bg-grey-500 h-2 w-12 items-center">
-                  Loaading...
-                  
+                  Loading...
                 </div>
-              ) : (posts.map((item) => (
-                <li
-                  key={item._id}
-                  className="flex items-center border p-2 my-2 cursor-pointer"
-                  onClick={() => handleItemClick(item._id)}
-                >
-                  {item.featuredImage && <Image src={item.featuredImage} alt={item.title} width={50} height={50} className="w-16 h-16 object-cover mr-4" />}
-                  <h3>{item.title}</h3>
-                </li>
-              ))
-            )}
+              ) : (
+                posts.map((item) => (
+                  <li
+                    key={item._id}
+                    className="flex items-center border p-2 my-2 cursor-pointer"
+                    onClick={() => handleItemClick(item._id)}
+                  >
+                    {item.featuredImage && (
+                      <Image
+                        src={item.featuredImage}
+                        alt={item.title}
+                        width={50}
+                        height={50}
+                        className="w-16 h-16 object-cover mr-4"
+                      />
+                    )}
+                    <h3>{item.title}</h3>
+                  </li>
+                ))
+              )}
             </ul>
           </div>
         </MainContent>
