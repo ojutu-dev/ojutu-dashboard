@@ -2,7 +2,7 @@
 
 import { SessionProvider } from "next-auth/react";
 import { ContentProvider } from '../context/ContentContext';
-import AuthWrapper from './Authwrapper';
+import AuthWrapper from './AuthWrapper';
 
 export default function ClientProviders({ children }) {
   return (
