@@ -29,29 +29,16 @@ export default async function handler(req, res) {
       address,
       ogdescription,
       body,
-      serviceId,
-      brandId,
-      keywordsId,
+      category,
+      brand,
+      keywords,
       featuredImage,
       headerImage,
       mainImage,
       otherImage,
       ogImage,
     } = req.body;
-    const brand = await Brand.findById(brandId);
-    const keywords = await Keywords.findById(keywordsId);
-    const service = await Service.findById(serviceId);
 
-    if (!brand) {
-      throw new Error(`Brand with ID ${brandId} not found`);
-    }
-
-    if (!keywords) {
-      throw new Error(`Keywords with ID ${keywordsId} not found`);
-    }
-    if (!service) {
-      throw new Error(`Service with ID ${serviceId} not found`);
-    }
     try {
       let featuredImageUrl, headerImageUrl, mainImageUrl, otherImageUrl, ogImageUrl;
 

@@ -17,7 +17,7 @@ const portfolioSchema = new Schema({
         unique: true,
       },
       
-      category: {
+      service: {
         type: Schema.Types.ObjectId,
         ref: 'Service',
         default: "",
@@ -55,12 +55,13 @@ const portfolioSchema = new Schema({
     type: String,
     required: true,
   },
-  keywords: {
-    type: Schema.Types.ObjectId,
-    ref: 'Keywords',
-    default: "",
-  },
- 
+  keywords: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Keywords',
+      default: "",
+    }
+  ],
   body: {
     type: Array,
     

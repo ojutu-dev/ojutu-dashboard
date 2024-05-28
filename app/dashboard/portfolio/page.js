@@ -35,6 +35,7 @@ export default function Section() {
 
         if (data.success) {
           setPortfolios(data.data);
+          console.log(data)
         } else {
           setError('Failed to fetch Portfolios');
           console.log(error)
@@ -64,12 +65,12 @@ export default function Section() {
             <ul>
               {portolios.map((item) => (
                 <li
-                  key={item.id}
+                  key={item._id}
                   className="flex items-center border p-2 my-2 cursor-pointer"
-                  onClick={() => handleItemClick(item.id)}
+                  onClick={() => handleItemClick(item._id)}
                 >
-                  {item.image && <Image src={item.image} alt={item.title || item.name} width={50} height={50} className="w-16 h-16 object-cover mr-4" />}
-                  <h3>{item.title || item.name}</h3>
+                  {item.mainImage && <Image src={item.mainImage} alt={item.title} width={50} height={50} className="w-16 h-16 object-cover mr-4" />}
+                  <h3>{item.title}</h3>
                 </li>
               ))}
             </ul>

@@ -21,10 +21,10 @@ export default async function handler(req, res) {
     }
   } else if (req.method === 'PUT') {
     try {
-      const { title, company, slug, category, address, brand, logo, mainImage, headerImage, otherImage, ogImage, ogdescription, keywords, body } = req.body;
+      const { title, company, slug, serviceId, address, brandId, logo, mainImage, headerImage, otherImage, ogImage, ogdescription, keywordsId, body } = req.body;
       const updatedPortfolio = await Portfolio.findByIdAndUpdate(
         id,
-        { title, company, slug, category, address, brand, logo, mainImage, headerImage, otherImage, ogImage, ogdescription, keywords, body },
+        { title, company, slug, service:serviceId, address, brand:brandId, logo, mainImage, headerImage, otherImage, ogImage, ogdescription, keywords:keywordsId, body },
         { new: true, runValidators: true }
       );
       if (!updatedPortfolio) {

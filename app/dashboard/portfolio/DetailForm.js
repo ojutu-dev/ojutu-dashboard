@@ -61,16 +61,16 @@ export default function DetailForm() {
   useEffect(() => {
     const fetchCategoryOptions = async () => {
       try {
-        const response = await fetch('/api/category');
+        const response = await fetch('/api/service');
         const data = await response.json();
-        console.log('Fetched categories:', data);
+        console.log('Fetched service:', data);
         if (data.success !== false) {
           setCategoryOptions(data.data || data);
         } else {
-          console.error('Failed to fetch categories');
+          console.error('Failed to fetch services');
         }
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error('Error fetching service:', error);
       }
     };
 
