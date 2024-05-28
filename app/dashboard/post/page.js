@@ -1,7 +1,5 @@
 'use client';
 
-import Header from '../../../components/Header';
-import Sidebar from '../../../components/Sidebar';
 import MainContent from '../../../components/MainContent';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -33,7 +31,7 @@ export default function Section() {
         const response = await fetch('/api/post');
         const data = await response.json();
         if (data.success) {
-          setPosts(data.data);
+          setPosts(data.data.reverse());
         } else {
           setError('Failed to fetch Posts');
         }
@@ -53,15 +51,13 @@ export default function Section() {
 
   return (
     <div className="flex">
-      <Sidebar />
       <div className="flex flex-col w-full">
-        <Header />
         <MainContent>
           <div>
             <h2>{`Content for ${section.charAt(0).toUpperCase() + section.slice(1)}`}</h2>
             <ul>
               {loading ? (
-                <div className="flex justify-center bg-grey-500 h-2 w-12 items-center">
+                <div className="grid place-content-center h-[50vh] w-full">
                   Loading...
                 </div>
               ) : (

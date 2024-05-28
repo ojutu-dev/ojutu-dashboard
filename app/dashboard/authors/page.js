@@ -1,7 +1,5 @@
 'use client';
 
-import Header from '../../../components/Header';
-import Sidebar from '../../../components/Sidebar';
 import MainContent from '../../../components/MainContent';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -34,10 +32,9 @@ export default function Section() {
         const data = await response.json();
 
         if (data.success) {
-          setAuthors(data.data);
+          setAuthors(data.data.reverse()); // Reverse the array to show new records at the top
         } else {
           setError('Failed to fetch Authors');
-          console.log(error)
         }
       } catch (err) {
         setError('An error occurred while fetching Authors');
@@ -57,29 +54,27 @@ export default function Section() {
 
   return (
     <div className="flex">
-      <Sidebar />
       <div className="flex flex-col w-full">
-        <Header />
         <MainContent>
           <div>
             <h2>{`Content for ${section.charAt(0).toUpperCase() + section.slice(1)}`}</h2>
             <ul>
               {loading ? (
-          <div className="flex justify-center bg-grey-500 h-2 w-12 items-center">
-            Loaading...
-            
-          </div>
-        ) : ( authors.map((item) => (
-                <li
-                  key={item.id}
-                  className="flex items-center border p-2 my-2 cursor-pointer"
-                  onClick={() => handleItemClick(item._id)}
-                >
-                  {item.image && <Image src={item.image} alt={item.title || item.name} width={50} height={50} className="w-16 h-16 object-cover mr-4" />}
-                  <h3>{item.title || item.name}</h3>
-                </li>
-              ))
-            )}
+                <div className="grid place-content-center w-full h-[50vh]">
+                  Loading...
+                </div>
+              ) : (
+                authors.map((item) => (
+                  <li
+                    key={item.id}
+                    className="flex items-center border p-2 my-2 cursor-pointer"
+                    onClick={() => handleItemClick(item._id)}
+                  >
+                    {item.image && <Image src={item.image} alt={item.title || item.name} width={50} height={50} className="w-16 h-16 object-cover mr-4" />}
+                    <h3>{item.title || item.name}</h3>
+                  </li>
+                ))
+              )}
             </ul>
           </div>
         </MainContent>

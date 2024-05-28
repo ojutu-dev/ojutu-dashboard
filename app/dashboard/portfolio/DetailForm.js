@@ -341,7 +341,7 @@ export default function DetailForm() {
         <button
           type="button"
           onClick={handleSlugGeneration}
-          className="ml-2 p-2 bg-blue-500 text-white rounded"
+          className="ml-2 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded"
         >
           Generate Slug
         </button>
@@ -511,25 +511,25 @@ export default function DetailForm() {
         </label>
       </div>
       <div className="mt-4 flex gap-3">
-        <button type="submit" className="p-2 bg-blue-500 text-white rounded">
+        <button type="submit" className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded">
           {isEditing ? "Update" : "Publish"}
+        </button>
+        <button
+          type="button"
+          onClick={handleCancel}
+          className="p-2 bg-gray-500 hover:bg-gray-600 text-white rounded"
+        >
+          Cancel
         </button>
         {isEditing && (
           <button
             type="button"
             onClick={() => handleDelete(params.id)}
-            className="p-2 bg-red-500 text-white rounded"
+            className="p-2 bg-red-500 hover:bg-red-600 text-white rounded"
           >
             Delete
           </button>
         )}
-        <button
-          type="button"
-          onClick={handleCancel}
-          className="p-2 bg-gray-500 text-white rounded"
-        >
-          Cancel
-        </button>
       </div>
       <ConfirmationModal
         isOpen={isModalOpen}
