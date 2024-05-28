@@ -21,7 +21,7 @@ export default function DetailForm() {
     description: '',
     categoryId: '',
     authorId: '',
-    body: '', // Ensure body is initialized as a string
+    body: '', 
   });
   const [section, setSection] = useState('');
   const [isEditing, setIsEditing] = useState(false);

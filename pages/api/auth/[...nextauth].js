@@ -1,51 +1,48 @@
-// NextAuth configuration
-import connectToMongoDB  from "../../../libs/mongodb";
-import User from "../../../model/user";
-import NextAuth from "next-auth/next";
-import CredentialsProvider from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
+import NextAuth from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import connectToMongoDB from '../../../libs/mongodb';
+import User from '../../../model/user';
+import bcrypt from 'bcryptjs';
 
-export const authOptions = {
+export default NextAuth({
   providers: [
     CredentialsProvider({
-      id: "credentials",
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "text" },
-        username: { label: "Username", type: "username" },
-        password: { label: "Password", type: "password" },
-      },
-
+      name: 'Credentials',
       async authorize(credentials) {
         await connectToMongoDB(process.env.MONGODB_URI);
 
-        // const { username, password } = credentials;
-
-        try {
-          const user = await User.findOne({ email: credentials.email});
-
-          if (user) {
-
-            const isPasswordCorrect = await bcrypt.compare(
-              credentials.password,
-              user.password
-            );
-            if (isPasswordCorrect) {
-              return user;
-          }
-
-         
-        } 
-      } catch (error) {
-          console.error("Error: ", error);
-          throw new Error("An error occurred during authentication", error);
+        const user = await User.findOne({ email: credentials.email });
+        if (!user) {
+          throw new Error('No user found with the email');
         }
-      },
-    }),
+
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isValid) {
+          throw new Error('Incorrect password');
+        }
+
+        return { id: user._id, username: user.username, email: user.email };
+      }
+    })
   ],
- 
-};
-
-const handler = NextAuth(authOptions);
-
-export default handler;
+  session: {
+    jwt: true,
+    maxAge: 10 * 60,  // 10 minutes
+    updateAge: 10 * 60,  // Force update every 10 minutes to refresh expiry
+  },
+  jwt: {
+    secret: process.env.JWT_SECRET,
+  },
+  callbacks: {
+    async jwt(token, user) {
+      if (user) {
+        token.user = user;
+      }
+      return token;
+    },
+    async session(session, token) {
+      session.user = token.user;
+      return session;
+    }
+  }
+});

@@ -13,9 +13,13 @@
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.2.0",
     "jodit-react": "^4.1.2",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.4.0",
     "next": "14.2.3",
     "next-auth": "^4.24.7",
+    "next-cookie": "^2.8.0",
+    "next-cookies": "^2.0.3",
+    "next-session": "^4.0.5",
     "react": "^18",
     "react-dom": "^18"
   },
