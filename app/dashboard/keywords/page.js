@@ -27,7 +27,7 @@ export default function Section() {
         const response = await fetch('/api/keywords');
         const data = await response.json();
         if (data.success) {
-          setKeywords(data.data);
+          setKeywords(data.data.reverse()); // Reverse the array to show new records at the top
         } else {
           setError('Failed to fetch keywords');
         }

@@ -28,7 +28,7 @@ export default function Section() {
         const data = await response.json();
 
         if (data.success) {
-          setTestimonies(data.data);
+          setTestimonies(data.data.reverse());
         } else {
           setError('Failed to fetch testimonies');
         }

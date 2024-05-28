@@ -26,7 +26,7 @@ export default function Section() {
       try {
         const response = await fetch('/api/category');
         const data = await response.json();
-        setCategories(data);
+        setCategories(data.reverse()); // Reverse the array to show new records at the top
       } catch (err) {
         setError('An error occurred while fetching categories');
       } finally {

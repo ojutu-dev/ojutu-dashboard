@@ -31,7 +31,7 @@ export default function Section() {
         const response = await fetch('/api/post');
         const data = await response.json();
         if (data.success) {
-          setPosts(data.data);
+          setPosts(data.data.reverse());
         } else {
           setError('Failed to fetch Posts');
         }

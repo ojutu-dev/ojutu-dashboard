@@ -32,7 +32,7 @@ export default function Section() {
         const data = await response.json();
 
         if (data.success) {
-          setPortfolios(data.data);
+          setPortfolios(data.data.reverse());
           console.log(data)
         } else {
           setError('Failed to fetch Portfolios');

@@ -32,7 +32,7 @@ export default function Section() {
         const data = await response.json();
 
         if (data.success) {
-          setServices(data.data);
+          setServices(data.data.reverse());
           console.log(data)
         } else {
           setError('Failed to fetch Services');
