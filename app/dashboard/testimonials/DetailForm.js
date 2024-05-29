@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import ConfirmationModal from '../../../components/ConfirmationModal';
+import Image from 'next/image';
 
 export default function DetailForm() {
   const router = useRouter();
@@ -175,7 +176,7 @@ export default function DetailForm() {
       <div className="mt-4">
         <label>
           Image:
-          {imagePreview && <img src={imagePreview} alt="Preview" className="w-32 h-32 object-cover my-2" />}
+          {imagePreview && <Image width={30} height={30} src={imagePreview} alt="Preview" className="w-32 h-32 object-cover my-2" />}
           <input
             type="file"
             name="image"
