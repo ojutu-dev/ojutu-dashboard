@@ -405,6 +405,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useContent } from '../../../context/ContentContext';
 import ConfirmationModal from '../../../components/ConfirmationModal';
+import Image from 'next/image';
 
 // Dynamically import JoditEditor to prevent issues with SSR
 const JoditEditor = dynamic(() => import('jodit-react'), { ssr: false });
@@ -685,7 +686,7 @@ export default function DetailForm() {
       <div className="mt-4">
         <label>
           Header Image:
-          {headerImagePreview && <img src={headerImagePreview} alt="Preview" className="w-32 h-32 object-cover my-2" />}
+          {headerImagePreview && <Image width={30} height={30} src={headerImagePreview} alt="Preview" className="w-32 h-32 object-cover my-2" />}
           <input
             type="file"
             name="headerImage"
@@ -698,7 +699,7 @@ export default function DetailForm() {
       <div className="mt-4">
         <label>
           Featured Image:
-          {featuredImagePreview && <img src={featuredImagePreview} alt="Preview" className="w-32 h-32 object-cover my-2" />}
+          {featuredImagePreview && <Image width={30} height={30} src={featuredImagePreview} alt="Preview" className="w-32 h-32 object-cover my-2" />}
           <input
             type="file"
             name="featuredImage"
@@ -711,7 +712,7 @@ export default function DetailForm() {
       <div className="mt-4">
         <label>
           OG Image:
-          {ogImagePreview && <img src={ogImagePreview} alt="Preview" className="w-32 h-32 object-cover my-2" />}
+          {ogImagePreview && <Image width={30} height={30} src={ogImagePreview} alt="Preview" className="w-32 h-32 object-cover my-2" />}
           <input
             type="file"
             name="ogImage"
