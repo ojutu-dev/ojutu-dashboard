@@ -179,7 +179,6 @@ export default function DetailForm() {
             type="file"
             name="image"
             onChange={handleChange}
-            required
             className="p-2 border rounded w-full"
             accept="image/*"
           />

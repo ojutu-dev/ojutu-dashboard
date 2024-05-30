@@ -426,7 +426,6 @@ export default function DetailForm() {
               <input
                 type="checkbox"
                 name="keywords"
-                required
                 value={keyword._id}
                 checked={formData.keywords.includes(keyword._id)}
                 onChange={handleChange}
@@ -453,7 +452,6 @@ export default function DetailForm() {
             type="file"
             name="mainImage"
             onChange={handleChange}
-            required
             className="p-2 border rounded w-full"
             accept="image/*"
           />
@@ -475,7 +473,6 @@ export default function DetailForm() {
             type="file"
             name="headerImage"
             onChange={handleChange}
-            required
             className="p-2 border rounded w-full"
             accept="image/*"
           />
@@ -497,7 +494,6 @@ export default function DetailForm() {
             type="file"
             name="otherImage"
             onChange={handleChange}
-            required
             className="p-2 border rounded w-full"
             accept="image/*"
           />
@@ -523,6 +519,7 @@ export default function DetailForm() {
             name="ogdescription"
             value={formData.ogdescription}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full resize-none aspect-[6/1] outline-none text-black"
           />
         </label>

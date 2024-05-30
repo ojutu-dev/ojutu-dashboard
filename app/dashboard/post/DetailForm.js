@@ -318,7 +318,6 @@ export default function DetailForm() {
             type="file"
             name="headerImage"
             onChange={handleChange}
-            required
             className="p-2 border rounded w-full"
             accept="image/*"
           />
@@ -340,7 +339,6 @@ export default function DetailForm() {
             type="file"
             name="featuredImage"
             onChange={handleChange}
-            required
             className="p-2 border rounded w-full"
             accept="image/*"
           />
@@ -362,7 +360,6 @@ export default function DetailForm() {
             type="file"
             name="ogImage"
             onChange={handleChange}
-            required
             className="p-2 border rounded w-full"
             accept="image/*"
           />
@@ -375,6 +372,7 @@ export default function DetailForm() {
             name="description"
             value={formData.description}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black resize-none aspect-[6/1]"
           />
         </label>
