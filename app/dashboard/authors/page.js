@@ -63,6 +63,7 @@ export default function Section() {
                 <div className="grid place-content-center w-full h-[50vh]">
                   Loading...
                 </div>
+                
               ) : (
                 authors.map((item) => (
                   <li
