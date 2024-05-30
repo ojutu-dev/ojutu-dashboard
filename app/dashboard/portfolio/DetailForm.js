@@ -318,6 +318,7 @@ export default function DetailForm() {
             name="title"
             value={formData.title}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>
@@ -330,6 +331,7 @@ export default function DetailForm() {
             name="company"
             value={formData.company}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>
@@ -345,7 +347,8 @@ export default function DetailForm() {
             name="slug"
             value={formData.slug}
             onChange={handleChange}
-            className="p-2 border rounded outline-none text-black w-9/12"
+            required
+            className="p-2 border rounded w-full outline-none text-black"
           />
 
         <button
@@ -365,6 +368,7 @@ export default function DetailForm() {
             name="categoryId"
             value={formData.categoryId}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Category</option>
@@ -383,6 +387,7 @@ export default function DetailForm() {
             name="brandId"
             value={formData.brandId}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Brand</option>
@@ -401,6 +406,7 @@ export default function DetailForm() {
             name="serviceId"
             value={formData.serviceId}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Service</option>
@@ -501,6 +507,7 @@ export default function DetailForm() {
             name="address"
             value={formData.address}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>
@@ -512,6 +519,7 @@ export default function DetailForm() {
             name="ogdescription"
             value={formData.ogdescription}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full resize-none aspect-[6/1] outline-none text-black"
           />
         </label>

@@ -63,11 +63,12 @@ export default function Section() {
                 <div className="grid place-content-center w-full h-[50vh]">
                   Loading...
                 </div>
+                
               ) : (
                 authors.map((item) => (
                   <li
                     key={item.id}
-                    className="flex items-center border p-2 my-2 cursor-pointer"
+                    className="flex items-center border p-2 my-2 hover:bg-blue-500 hover:bg-opacity-25 cursor-pointer"
                     onClick={() => handleItemClick(item._id)}
                   >
                     {item.image && <Image src={item.image} alt={item.title || item.name} width={50} height={50} className="w-16 h-16 object-cover mr-4" />}

@@ -272,6 +272,7 @@ export default function DetailForm() {
             name="title"
             value={formData.title}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>
@@ -287,7 +288,8 @@ export default function DetailForm() {
             name="slug"
             value={formData.slug}
             onChange={handleChange}
-            className="p-2 border rounded outline-none text-black w-9/12"
+            required
+            className="p-2 border rounded w-full outline-none text-black"
           />
 
         <button
@@ -370,6 +372,7 @@ export default function DetailForm() {
             name="description"
             value={formData.description}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black resize-none aspect-[6/1]"
           />
         </label>
@@ -381,6 +384,7 @@ export default function DetailForm() {
             name="categoryId"
             value={formData.categoryId}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Category</option>
@@ -399,6 +403,7 @@ export default function DetailForm() {
             name="authorId"
             value={formData.authorId}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Author</option>

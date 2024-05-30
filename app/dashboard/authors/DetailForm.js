@@ -141,6 +141,7 @@ export default function DetailForm() {
             name="name"
             value={formData.name}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>
@@ -156,7 +157,8 @@ export default function DetailForm() {
             name="slug"
             value={formData.slug}
             onChange={handleChange}
-            className="p-2 border rounded outline-none text-black w-9/12"
+            required
+            className="p-2 border rounded w-full outline-none text-black"
           />
 
         <button

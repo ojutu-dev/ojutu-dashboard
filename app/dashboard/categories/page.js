@@ -54,7 +54,7 @@ export default function Section() {
               {categories.map((item) => (
                 <li
                   key={item._id}
-                  className="flex items-center border p-2 my-2 cursor-pointer"
+                  className="flex items-center border p-2 my-2 hover:bg-blue-500 hover:bg-opacity-25 cursor-pointer"
                   onClick={() => handleItemClick(item._id)}
                 >
                   {item.image && <Image src={item.image} alt={item.title} width={50} height={50} className="w-16 h-16 object-cover mr-4" />}
