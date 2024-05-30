@@ -146,6 +146,7 @@ export default function DetailForm() {
             name="title"
             value={formData.title}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>
@@ -158,6 +159,7 @@ export default function DetailForm() {
             name="work"
             value={formData.work}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>
@@ -169,6 +171,7 @@ export default function DetailForm() {
             name="content"
             value={formData.content}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full resize-none outline-none text-black aspect-[6/1]"
           />
         </label>
@@ -181,6 +184,7 @@ export default function DetailForm() {
             type="file"
             name="image"
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full"
             accept="image/*"
           />
@@ -194,6 +198,7 @@ export default function DetailForm() {
             name="star"
             value={formData.star}
             onChange={handleChange}
+            required
             min="1"
             max="5"
             className="p-2 border rounded w-full outline-none text-black"

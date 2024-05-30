@@ -156,6 +156,7 @@ export default function DetailForm() {
             name="title"
             value={formData.title}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>

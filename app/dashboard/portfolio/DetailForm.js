@@ -314,6 +314,7 @@ export default function DetailForm() {
             name="title"
             value={formData.title}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>
@@ -326,6 +327,7 @@ export default function DetailForm() {
             name="company"
             value={formData.company}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>
@@ -338,6 +340,7 @@ export default function DetailForm() {
             name="slug"
             value={formData.slug}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>
@@ -356,6 +359,7 @@ export default function DetailForm() {
             name="categoryId"
             value={formData.categoryId}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Category</option>
@@ -374,6 +378,7 @@ export default function DetailForm() {
             name="brandId"
             value={formData.brandId}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Brand</option>
@@ -392,6 +397,7 @@ export default function DetailForm() {
             name="serviceId"
             value={formData.serviceId}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Service</option>
@@ -411,6 +417,7 @@ export default function DetailForm() {
               <input
                 type="checkbox"
                 name="keywords"
+                required
                 value={keyword._id}
                 checked={formData.keywords.includes(keyword._id)}
                 onChange={handleChange}
@@ -435,6 +442,7 @@ export default function DetailForm() {
             type="file"
             name="mainImage"
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full"
             accept="image/*"
           />
@@ -454,6 +462,7 @@ export default function DetailForm() {
             type="file"
             name="headerImage"
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full"
             accept="image/*"
           />
@@ -473,6 +482,7 @@ export default function DetailForm() {
             type="file"
             name="otherImage"
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full"
             accept="image/*"
           />
@@ -486,6 +496,7 @@ export default function DetailForm() {
             name="address"
             value={formData.address}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>

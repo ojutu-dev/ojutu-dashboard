@@ -264,6 +264,7 @@ export default function DetailForm() {
             name="title"
             value={formData.title}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>
@@ -276,6 +277,7 @@ export default function DetailForm() {
             name="slug"
             value={formData.slug}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           />
         </label>
@@ -291,6 +293,7 @@ export default function DetailForm() {
             type="file"
             name="headerImage"
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full"
             accept="image/*"
           />
@@ -304,6 +307,7 @@ export default function DetailForm() {
             type="file"
             name="featuredImage"
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full"
             accept="image/*"
           />
@@ -317,6 +321,7 @@ export default function DetailForm() {
             type="file"
             name="ogImage"
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full"
             accept="image/*"
           />
@@ -340,6 +345,7 @@ export default function DetailForm() {
             name="categoryId"
             value={formData.categoryId}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Category</option>
@@ -356,6 +362,7 @@ export default function DetailForm() {
             name="authorId"
             value={formData.authorId}
             onChange={handleChange}
+            required
             className="p-2 border rounded w-full outline-none text-black"
           >
             <option value="">Select Author</option>

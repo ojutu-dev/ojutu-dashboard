@@ -52,7 +52,7 @@ export default function Section() {
 
   return (
     <div className="flex">
-      <div className="flex flex-col w-full">
+      <div className="flex flex-col w-full ">
         <MainContent>
           <div>
             <h2>{`Content for ${section.charAt(0).toUpperCase() + section.slice(1)}`}</h2>
@@ -64,7 +64,7 @@ export default function Section() {
                 portfolios.map((item) => (
                 <li
                   key={item._id}
-                  className="flex items-center border p-2 my-2 cursor-pointer"
+                  className="flex items-center border hover:bg-blue-500 hover:bg-opacity-25 p-2 my-2 cursor-pointer"
                   onClick={() => handleItemClick(item._id)}
                 >
                   {item.mainImage && <Image src={item.mainImage} alt={item.title} width={50} height={50} className="w-16 h-16 object-cover mr-4" />}
