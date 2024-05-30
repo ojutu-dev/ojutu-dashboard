@@ -332,9 +332,12 @@ export default function DetailForm() {
           />
         </label>
       </div>
-      <div className="mt-4 flex items-center">
+      <div className="mt-4">
         <label className="w-full">
           Slug:
+        </label>
+
+        <div className="flex items-center">
           <input
             type="text"
             name="slug"
@@ -343,14 +346,16 @@ export default function DetailForm() {
             required
             className="p-2 border rounded w-full outline-none text-black"
           />
-        </label>
+
         <button
           type="button"
           onClick={handleSlugGeneration}
-          className="ml-2 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded"
+          className="ml-2 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded w-3/12"
         >
           Generate Slug
         </button>
+
+        </div>
       </div>
       <div className="mt-4">
         <label>
