@@ -20,24 +20,34 @@ export default function MainContent({ children }) {
 
   useEffect(() => {
     const allChildren = React.Children.toArray(children);
-    if (searchQuery) {
-      const filtered = allChildren.filter(child => {
-        const childElements = React.Children.toArray(child.props.children);
-        let found = false;
+    console.log('All children:', allChildren);
 
-        childElements.forEach(childElement => {
-          if (React.isValidElement(childElement)) {
-            const title = childElement.props.children || childElement.props.title || childElement.props.name || '';
-            if (title.toString().toLowerCase().includes(searchQuery.toLowerCase())) {
-              found = true;
-            }
+    const findLiElements = (elements) => {
+      let liElements = [];
+      elements.forEach((element) => {
+        if (React.isValidElement(element)) {
+          if (element.type === 'li') {
+            liElements.push(element);
+          } else if (element.props.children) {
+            liElements = liElements.concat(findLiElements(React.Children.toArray(element.props.children)));
           }
-        });
-
-        return found;
+        }
       });
+      return liElements;
+    };
 
-      setFilteredChildren(filtered);
+    const liElements = findLiElements(allChildren);
+    console.log('LI elements:', liElements);
+
+    if (searchQuery) {
+      const filtered = liElements.filter(li => {
+        const title = li.props.title || '';
+        const name = li.props.name || '';
+        // console.log('LI Title:', title, 'LI Name:', name);
+        return title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+               name.toLowerCase().includes(searchQuery.toLowerCase());
+      });
+      setFilteredChildren(filtered.length > 0 ? filtered : [<p>No results found.</p>]);
     } else {
       setFilteredChildren(allChildren);
     }
@@ -65,11 +75,7 @@ export default function MainContent({ children }) {
         </button>
       </div>
       <div>
-        {filteredChildren.length > 0 ? (
-          filteredChildren
-        ) : (
-          <p>No results found.</p>
-        )}
+        {filteredChildren}
       </div>
     </div>
   );
