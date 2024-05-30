@@ -20,7 +20,7 @@ export default function MainContent({ children }) {
 
   useEffect(() => {
     const allChildren = React.Children.toArray(children);
-    console.log('All children:', allChildren);
+    // console.log('All children:', allChildren);
 
     const findLiElements = (elements) => {
       let liElements = [];
@@ -37,7 +37,7 @@ export default function MainContent({ children }) {
     };
 
     const liElements = findLiElements(allChildren);
-    console.log('LI elements:', liElements);
+    // console.log('LI elements:', liElements);
 
     if (searchQuery) {
       const filtered = liElements.filter(li => {
