@@ -1,11 +1,11 @@
 import { useRouter, usePathname, useParams } from "next/navigation";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useContent } from "../../../context/ContentContext";
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import Image from "next/image";
 
-const JoditEditor = dynamic(() => import('jodit-react'), { ssr: false });
+const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
 
 export default function DetailForm() {
   const router = useRouter();
@@ -39,6 +39,7 @@ export default function DetailForm() {
   const [keywordOptions, setKeywordOptions] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [loading, setLoading] = useState(false);
   const editor = useRef(null);
 
   useEffect(() => {
@@ -182,6 +183,7 @@ export default function DetailForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     // Basic validation before submission
     if (
@@ -223,8 +225,10 @@ export default function DetailForm() {
       }
 
       router.push(`/dashboard/${section}`);
+      setLoading(false);
     } catch (error) {
       console.error("Error submitting form:", error);
+      setLoading(false);
     }
   };
 
@@ -425,7 +429,9 @@ export default function DetailForm() {
         <label>
           Main Image:
           {mainImagePreview && (
-            <Image width={30} height={30}
+            <Image
+              width={30}
+              height={30}
               src={mainImagePreview}
               alt="Preview"
               className="w-32 h-32 object-cover my-2"
@@ -444,7 +450,9 @@ export default function DetailForm() {
         <label>
           Header Image:
           {headerImagePreview && (
-            <Image width={30} height={30}
+            <Image
+              width={30}
+              height={30}
               src={headerImagePreview}
               alt="Preview"
               className="w-32 h-32 object-cover my-2"
@@ -463,7 +471,9 @@ export default function DetailForm() {
         <label>
           Other Image:
           {otherImagePreview && (
-            <Image width={30} height={30}
+            <Image
+              width={30}
+              height={30}
               src={otherImagePreview}
               alt="Preview"
               className="w-32 h-32 object-cover my-2"
@@ -514,8 +524,32 @@ export default function DetailForm() {
         </label>
       </div>
       <div className="mt-4 flex gap-3">
-        <button type="submit" className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded">
-          {isEditing ? "Update" : "Publish"}
+        <button
+          type="submit"
+          className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded"
+          disabled={loading}
+        >
+          {loading ? (
+            <svg
+              class="animate-spin h-6 w-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                class="stroke-current text-white opacity-75"
+                cx="12"
+                cy="12"
+                r="10"
+                fill="none"
+                stroke-width="4"
+              ></circle>
+            </svg>
+          ) : isEditing ? (
+            "Update"
+          ) : (
+            "Publish"
+          )}
         </button>
         <button
           type="button"

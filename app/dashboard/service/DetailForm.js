@@ -19,6 +19,7 @@ export default function ServiceDetailForm() {
   const [section, setSection] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (pathname) {
@@ -30,9 +31,7 @@ export default function ServiceDetailForm() {
 
   useEffect(() => {
     if (params.id && section) {
-      const item = content[section]?.find(
-        (item) => item.id === params.id
-      );
+      const item = content[section]?.find((item) => item.id === params.id);
       if (item) {
         setFormData(item);
         setIsEditing(true);
@@ -64,6 +63,7 @@ export default function ServiceDetailForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     if (isEditing) {
       try {
@@ -83,8 +83,10 @@ export default function ServiceDetailForm() {
           const errorData = await response.json();
           console.error("Failed to update service:", errorData);
         }
+        setLoading(false);
       } catch (error) {
         console.error("Error updating service:", error);
+        setLoading(false);
       }
     } else {
       try {
@@ -104,8 +106,10 @@ export default function ServiceDetailForm() {
           const errorData = await response.json();
           console.error("Failed to create service:", errorData);
         }
+        setLoading(false);
       } catch (error) {
         console.error("Error creating service:", error);
+        setLoading(false);
       }
     }
   };
@@ -176,8 +180,32 @@ export default function ServiceDetailForm() {
       </div>
 
       <div className="flex space-x-2 mt-4">
-        <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">
-          {isEditing ? "Update" : "Publish"}
+        <button
+          type="submit"
+          className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
+          disabled={loading}
+        >
+          {loading ? (
+            <svg
+              class="animate-spin h-6 w-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                class="stroke-current text-white opacity-75"
+                cx="12"
+                cy="12"
+                r="10"
+                fill="none"
+                stroke-width="4"
+              ></circle>
+            </svg>
+          ) : isEditing ? (
+            "Update"
+          ) : (
+            "Publish"
+          )}
         </button>
         <button
           type="button"
