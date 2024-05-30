@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useRouter, usePathname, useParams } from 'next/navigation';
-import { useState, useEffect, useMemo, useRef } from 'react';
-import dynamic from 'next/dynamic';
-import { useContent } from '../../../context/ContentContext';
-import ConfirmationModal from '../../../components/ConfirmationModal';
-import Image from 'next/image';
+import { useRouter, usePathname, useParams } from "next/navigation";
+import { useState, useEffect, useMemo, useRef } from "react";
+import dynamic from "next/dynamic";
+import { useContent } from "../../../context/ContentContext";
+import ConfirmationModal from "../../../components/ConfirmationModal";
+import Image from "next/image";
 
 // Dynamically import JoditEditor to prevent issues with SSR
-const JoditEditor = dynamic(() => import('jodit-react'), { ssr: false });
+const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
 
 export default function DetailForm() {
   const router = useRouter();
@@ -17,17 +17,17 @@ export default function DetailForm() {
   const { content, addItem, updateItem, deleteItem } = useContent();
   const [formData, setFormData] = useState({
     id: Date.now(),
-    title: '',
-    slug: '',
+    title: "",
+    slug: "",
     headerImage: null,
     featuredImage: null,
     ogImage: null,
-    description: '',
-    categoryId: '',
-    authorId: '',
-    body: '',
+    description: "",
+    categoryId: "",
+    authorId: "",
+    body: "",
   });
-  const [section, setSection] = useState('');
+  const [section, setSection] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [headerImagePreview, setHeaderImagePreview] = useState(null);
   const [featuredImagePreview, setFeaturedImagePreview] = useState(null);
@@ -35,11 +35,12 @@ export default function DetailForm() {
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [authorOptions, setAuthorOptions] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
+  const [loading, setLoading] = useState(false);
   const editor = useRef(null);
 
   useEffect(() => {
     if (pathname) {
-      const pathParts = pathname.split('/');
+      const pathParts = pathname.split("/");
       const sectionName = pathParts[pathParts.length - 2];
       setSection(sectionName);
     }
@@ -63,17 +64,19 @@ export default function DetailForm() {
               description: data.description,
               categoryId: data.category._id,
               authorId: data.author._id,
-              body: Array.isArray(data.body) ? data.body.join('') : data.body || '', // Convert body to string
+              body: Array.isArray(data.body)
+                ? data.body.join("")
+                : data.body || "", // Convert body to string
             });
             setHeaderImagePreview(data.headerImage);
             setFeaturedImagePreview(data.featuredImage);
             setOgImagePreview(data.ogImage);
             setIsEditing(true);
           } else {
-            console.error('Failed to fetch post data:', data);
+            console.error("Failed to fetch post data:", data);
           }
         } catch (error) {
-          console.error('Error fetching post data:', error);
+          console.error("Error fetching post data:", error);
         }
       };
       fetchPostData();
@@ -83,29 +86,29 @@ export default function DetailForm() {
   useEffect(() => {
     const fetchCategoryOptions = async () => {
       try {
-        const response = await fetch('/api/category');
+        const response = await fetch("/api/category");
         const data = await response.json();
         if (data.length > 0) {
           setCategoryOptions(data);
         } else {
-          console.error('Failed to fetch categories');
+          console.error("Failed to fetch categories");
         }
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error("Error fetching categories:", error);
       }
     };
 
     const fetchAuthorOptions = async () => {
       try {
-        const response = await fetch('/api/author');
+        const response = await fetch("/api/author");
         const data = await response.json();
         if (data.success) {
           setAuthorOptions(data.data);
         } else {
-          console.error('Failed to fetch authors');
+          console.error("Failed to fetch authors");
         }
       } catch (error) {
-        console.error('Error fetching authors:', error);
+        console.error("Error fetching authors:", error);
       }
     };
 
@@ -123,9 +126,9 @@ export default function DetailForm() {
           ...prevFormData,
           [name]: reader.result,
         }));
-        if (name === 'headerImage') setHeaderImagePreview(reader.result);
-        if (name === 'featuredImage') setFeaturedImagePreview(reader.result);
-        if (name === 'ogImage') setOgImagePreview(reader.result);
+        if (name === "headerImage") setHeaderImagePreview(reader.result);
+        if (name === "featuredImage") setFeaturedImagePreview(reader.result);
+        if (name === "ogImage") setOgImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
     } else {
@@ -139,34 +142,35 @@ export default function DetailForm() {
   const handleSlugGeneration = () => {
     setFormData((prevFormData) => ({
       ...prevFormData,
-      slug: prevFormData.title.toLowerCase().replace(/\s+/g, '-'),
+      slug: prevFormData.title.toLowerCase().replace(/\s+/g, "-"),
     }));
   };
 
   const handleBodyChange = (value) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
-      body: value || '', // Ensure body is always a string
+      body: value || "", // Ensure body is always a string
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const method = isEditing ? 'PUT' : 'POST';
-    const url = isEditing ? `/api/post/${params.id}` : '/api/post';
+    const method = isEditing ? "PUT" : "POST";
+    const url = isEditing ? `/api/post/${params.id}` : "/api/post";
+    setLoading(true);
 
     try {
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
       });
 
       if (!response.ok) {
         const errorResponse = await response.json();
-        console.error('Failed to save post:', errorResponse);
+        console.error("Failed to save post:", errorResponse);
         return;
       }
 
@@ -177,8 +181,10 @@ export default function DetailForm() {
         addItem(section, post);
       }
       router.push(`/dashboard/${section}`);
+      setLoading(false);
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error("Error submitting form:", error);
+      setLoading(false);
     }
   };
 
@@ -193,16 +199,16 @@ export default function DetailForm() {
   const confirmDelete = async () => {
     try {
       const response = await fetch(`/api/post/${params.id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
       if (response.ok) {
         deleteItem(section, formData.id);
         router.push(`/dashboard/${section}`);
       } else {
-        console.error('Failed to delete post');
+        console.error("Failed to delete post");
       }
     } catch (error) {
-      console.error('Error deleting post:', error);
+      console.error("Error deleting post:", error);
     } finally {
       setIsModalOpen(false); // Close the modal
     }
@@ -215,18 +221,18 @@ export default function DetailForm() {
   const config = useMemo(
     () => ({
       toolbarAdaptive: false,
-      buttons: 'paragraph,|,bold,italic,ul,paste,selectall,file,image',
+      buttons: "paragraph,|,bold,italic,ul,paste,selectall,file,image",
       uploader: {
         insertImageAsBase64URI: true,
-        imagesExtensions: ['jpg', 'png', 'jpeg', 'gif'],
-        url: '/api/upload',
-        format: 'json',
-        method: 'POST',
+        imagesExtensions: ["jpg", "png", "jpeg", "gif"],
+        url: "/api/upload",
+        format: "json",
+        method: "POST",
         headers: {
-          Authorization: 'Bearer your-access-token',
+          Authorization: "Bearer your-access-token",
         },
         filesVariableName: function (t) {
-          return 'files[' + t + ']';
+          return "files[" + t + "]";
         },
         process: function (resp) {
           return {
@@ -245,16 +251,18 @@ export default function DetailForm() {
           };
         },
       },
-      placeholder: 'Start typing...',
+      placeholder: "Start typing...",
     }),
     []
   );
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className='mb-8'>
-        <h2 className='text-2xl font-bold'>Post:</h2>
-        {formData.title && <div className="text-lg font-bold">{formData.title}</div>}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold">Post:</h2>
+        {formData.title && (
+          <div className="text-lg font-bold">{formData.title}</div>
+        )}
       </div>
       <div>
         <label>
@@ -297,7 +305,15 @@ export default function DetailForm() {
       <div className="mt-4">
         <label>
           Header Image:
-          {headerImagePreview && <Image width={30} height={30} src={headerImagePreview} alt="Preview" className="w-32 h-32 object-cover my-2" />}
+          {headerImagePreview && (
+            <Image
+              width={30}
+              height={30}
+              src={headerImagePreview}
+              alt="Preview"
+              className="w-32 h-32 object-cover my-2"
+            />
+          )}
           <input
             type="file"
             name="headerImage"
@@ -311,7 +327,15 @@ export default function DetailForm() {
       <div className="mt-4">
         <label>
           Featured Image:
-          {featuredImagePreview && <Image width={30} height={30} src={featuredImagePreview} alt="Preview" className="w-32 h-32 object-cover my-2" />}
+          {featuredImagePreview && (
+            <Image
+              width={30}
+              height={30}
+              src={featuredImagePreview}
+              alt="Preview"
+              className="w-32 h-32 object-cover my-2"
+            />
+          )}
           <input
             type="file"
             name="featuredImage"
@@ -325,7 +349,15 @@ export default function DetailForm() {
       <div className="mt-4">
         <label>
           OG Image:
-          {ogImagePreview && <Image width={30} height={30} src={ogImagePreview} alt="Preview" className="w-32 h-32 object-cover my-2" />}
+          {ogImagePreview && (
+            <Image
+              width={30}
+              height={30}
+              src={ogImagePreview}
+              alt="Preview"
+              className="w-32 h-32 object-cover my-2"
+            />
+          )}
           <input
             type="file"
             name="ogImage"
@@ -359,7 +391,9 @@ export default function DetailForm() {
           >
             <option value="">Select Category</option>
             {categoryOptions.map((category) => (
-              <option key={category._id} value={category._id}>{category.title}</option>
+              <option key={category._id} value={category._id}>
+                {category.title}
+              </option>
             ))}
           </select>
         </label>
@@ -376,7 +410,9 @@ export default function DetailForm() {
           >
             <option value="">Select Author</option>
             {authorOptions.map((author) => (
-              <option key={author._id} value={author._id}>{author.name}</option>
+              <option key={author._id} value={author._id}>
+                {author.name}
+              </option>
             ))}
           </select>
         </label>
@@ -394,14 +430,47 @@ export default function DetailForm() {
         </label>
       </div>
       <div className="flex space-x-2 mt-4">
-        <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">
-          {isEditing ? 'Update' : 'Publish'}
+        <button
+          type="submit"
+          className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
+          disabled={loading}
+        >
+          {loading ? (
+            <svg
+              class="animate-spin h-6 w-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                class="stroke-current text-white opacity-75"
+                cx="12"
+                cy="12"
+                r="10"
+                fill="none"
+                stroke-width="4"
+              ></circle>
+            </svg>
+          ) : isEditing ? (
+            "Update"
+          ) : (
+            "Publish"
+          )}
+          {/* {isEditing ? "Update" : "Publish"} */}
         </button>
-        <button type="button" onClick={handleCancel} className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded">
+        <button
+          type="button"
+          onClick={handleCancel}
+          className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded"
+        >
           Cancel
         </button>
         {isEditing && (
-          <button type="button" onClick={handleDelete} className="bg-red-500 hover:bg-red-600 text-white p-2 rounded">
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="bg-red-500 hover:bg-red-600 text-white p-2 rounded"
+          >
             Delete
           </button>
         )}

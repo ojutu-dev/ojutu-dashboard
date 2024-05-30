@@ -18,6 +18,7 @@ export default function KeywordDetailForm() {
   const [section, setSection] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (pathname) {
@@ -55,6 +56,7 @@ export default function KeywordDetailForm() {
     e.preventDefault();
     const method = isEditing ? 'PUT' : 'POST';
     const url = isEditing ? `/api/keywords/${params.id}` : '/api/keywords';
+    setLoading(true)
 
     try {
       const response = await fetch(url, {
@@ -76,8 +78,10 @@ export default function KeywordDetailForm() {
       } else {
         console.error('Failed to save keyword');
       }
+      setLoading(false)
     } catch (error) {
       console.error('Error submitting form:', error);
+      setLoading(false)
     }
   };
 
@@ -142,8 +146,28 @@ export default function KeywordDetailForm() {
         </label>
       </div>
       <div className="flex space-x-2 mt-4">
-        <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">
-          {isEditing ? 'Update' : 'Publish'}
+        <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded" disabled={loading}>
+        {loading ? (
+            <svg
+              class="animate-spin h-6 w-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                class="stroke-current text-white opacity-75"
+                cx="12"
+                cy="12"
+                r="10"
+                fill="none"
+                stroke-width="4"
+              ></circle>
+            </svg>
+          ) : isEditing ? (
+            "Update"
+          ) : (
+            "Publish"
+          )}
         </button>
         <button type="button" onClick={handleCancel} className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded">
           Cancel
