@@ -46,10 +46,10 @@ export default function MainContent({ children }) {
         // console.log('LI Title:', title, 'LI Name:', name);
         return title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                name.toLowerCase().includes(searchQuery.toLowerCase());
-      });
-      setFilteredChildren(filtered.length > 0 ? filtered : [<p>No results found.</p>]);
+      }).map((li, index) => React.cloneElement(li, { key: index }));
+      setFilteredChildren(filtered.length > 0 ? filtered : [<p key="no-results">No results found.</p>]);
     } else {
-      setFilteredChildren(allChildren);
+      setFilteredChildren(allChildren.map((child, index) => React.cloneElement(child, { key: index })));
     }
   }, [searchQuery, children]);
 
