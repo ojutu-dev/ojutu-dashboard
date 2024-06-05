@@ -1,6 +1,7 @@
 import connectToMongoDB from '../../../libs/mongodb';
 import Portfolio from '../../../model/portfolio';
 import { v2 as cloudinary } from 'cloudinary';
+export const runtime = 'edge';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

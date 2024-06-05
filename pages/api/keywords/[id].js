@@ -1,5 +1,6 @@
 import connectToMongoDB from '../../../libs/mongodb';
 import Keywords from '../../../model/keywords';
+export const runtime = 'edge';
 
 export default async function handler(req, res) {
   await connectToMongoDB(process.env.MONGODB_URI);
