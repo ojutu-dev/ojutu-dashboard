@@ -1,7 +1,7 @@
 import connectToMongoDB from '../../../../libs/mongodb';
 import Author from '../../../../model/author';
 import Post from '../../../../model/post';
-export const runtime = 'edge';
+
 
 const models = {
   author: Author,

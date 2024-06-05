@@ -1,6 +1,6 @@
 import connectToMongoDB from '../../../libs/mongodb';
 import Author from '../../../model/author';
-export const runtime = 'edge';
+
 
 export default async function handler(req, res) {
   await connectToMongoDB(process.env.MONGODB_URI);
