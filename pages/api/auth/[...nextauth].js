@@ -4,7 +4,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import connectToMongoDB from '../../../libs/mongodb';
 import User from '../../../model/user';
-
+export const runtime = 'edge';
 
 export default NextAuth({
   providers: [
