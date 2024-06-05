@@ -1,6 +1,7 @@
 import connectToMongoDB from '../../../libs/mongodb';
 import Author from '../../../model/author';
 import { v2 as cloudinary } from 'cloudinary';
+export const runtime = "edge"
 
 
 

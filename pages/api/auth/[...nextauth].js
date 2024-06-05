@@ -5,13 +5,7 @@ import bcrypt from 'bcryptjs';
 import connectToMongoDB from '../../../libs/mongodb';
 import User from '../../../model/user';
 
-export const config = {
-  runtime: 'edge', 
-  unstable_allowDynamic: [
-    '../../../libs/mongodb', 
-    '/node_modules/function-bind/**', 
-  ],
-}
+
 
 
 export default NextAuth({
