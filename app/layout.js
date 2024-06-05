@@ -1,6 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientProviders from '../components/ClientProviders';
+export const runtime = "edge"
 
 const inter = Inter({ subsets: ["latin"] });
 
