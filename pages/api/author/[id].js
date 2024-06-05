@@ -1,12 +1,6 @@
 import connectToMongoDB from '../../../libs/mongodb';
 import Author from '../../../model/author';
-export const config = {
-  runtime: 'edge', 
-  unstable_allowDynamic: [
-    '../../../libs/mongodb', 
-    '/node_modules/function-bind/**', 
-  ],
-}
+
 
 
 export default async function handler(req, res) {

@@ -15,6 +15,7 @@ export const config = {
 
 
 export default NextAuth({
+  
   providers: [
     CredentialsProvider({
       name: 'Credentials',
