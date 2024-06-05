@@ -4,7 +4,7 @@ import Brand from '../../../model/brand';
 import Keywords from '../../../model/keywords';
 import Service from '../../../model/service';
 import { v2 as cloudinary } from 'cloudinary';
-export const runtime = 'edge';
+
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
