@@ -55,7 +55,7 @@ export default function RegisterForm() {
         }),
       })
        if(res.status === 400) {
-        setError("This email is already registered")
+        setError("This email or username is already registered")
       } if (res.ok) {
         setError("");
         router.push("/");

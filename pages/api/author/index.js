@@ -39,7 +39,6 @@ export default async function handler(req, res) {
       res.status(201).json({ success: true, data: newAuthor });
     } catch (error) {
       res.status(500).json({ message: 'Error creating author', error });
-      console.error('Error uploading image:', error);
     }
   } else {
     res.status(405).json({ message: 'Method not allowed' });
