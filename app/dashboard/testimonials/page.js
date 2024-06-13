@@ -1,5 +1,4 @@
 'use client';
-export const runtime = "edge"
 
 import MainContent from '../../../components/MainContent';
 import { useRouter, usePathname } from 'next/navigation';
