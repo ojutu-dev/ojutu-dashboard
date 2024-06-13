@@ -36,8 +36,6 @@ export default async function handler(req, res) {
       res.status(201).json(newAuthor);
     } catch (error) {
       res.status(500).json({ message: 'Error creating author', error });
-      console.error('Error uploading image:', error);
-      console.log(process.env.CLOUDINARY_CLOUD_NAME, process.env.CLOUDINARY_API_KEY, process.env.CLOUDINARY_API_SECRET);
     }
   }  else {
     res.status(405).json({ message: 'Method not allowed' });
