@@ -43,7 +43,7 @@ export default async function handler(req, res) {
 
       const uploadBase64Image = async (base64Image) => {
         if (base64Image) {
-          const uploadResult = await cloudinary.uploader.upload(base64Image, { folder: 'portfolio' });
+          const uploadResult = await cloudinary.uploader.upload(base64Image, { folder: 'ojutu' });
           return uploadResult.secure_url;
         }
         return null;
