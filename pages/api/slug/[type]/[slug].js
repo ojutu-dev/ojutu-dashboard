@@ -2,7 +2,6 @@ import connectToMongoDB from '../../../../libs/mongodb';
 import Author from '../../../../model/author';
 import Post from '../../../../model/post';
 
-
 const models = {
   author: Author,
   post: Post,

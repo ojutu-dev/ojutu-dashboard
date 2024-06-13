@@ -2,8 +2,6 @@ import connectToMongoDB from '../../../libs/mongodb';
 import Author from '../../../model/author';
 import { v2 as cloudinary } from 'cloudinary';
 
-export const runtime = 'edge';
-
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -16,7 +14,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       const authors = await Author.find();
-      res.status(200).json({ success: true, data: authors });
+      res.status(200).json({success: true, data:authors});
     } catch (error) {
       res.status(500).json({ message: 'Error fetching authors', error });
     }
@@ -24,7 +22,6 @@ export default async function handler(req, res) {
     try {
       const { name, image, slug, description } = req.body;
 
-      // Ensure the image string is a valid base64 string for upload
       const uploadedImage = await cloudinary.uploader.upload(image, {
         folder: 'ojutu',
       });
@@ -36,11 +33,11 @@ export default async function handler(req, res) {
         description,
       });
       await newAuthor.save();
-      res.status(201).json({ success: true, data: newAuthor });
+      res.status(201).json(newAuthor);
     } catch (error) {
       res.status(500).json({ message: 'Error creating author', error });
     }
-  } else {
+  }  else {
     res.status(405).json({ message: 'Method not allowed' });
   }
 }
