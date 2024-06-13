@@ -1,4 +1,5 @@
 'use client';
+export const runtime = "edge"
 
 import MainContent from '../../../components/MainContent';
 import { useRouter, usePathname } from 'next/navigation';
@@ -64,6 +65,8 @@ export default function Section() {
                 posts.map((item) => (
                   <li
                     key={item._id}
+                    title={item.title || item.name}
+                    name={item.name}
                     className="flex items-center border p-2 my-2 hover:bg-blue-500 hover:bg-opacity-25 cursor-pointer"
                     onClick={() => handleItemClick(item._id)}
                   >

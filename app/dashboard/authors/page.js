@@ -1,4 +1,5 @@
 'use client';
+export const runtime = "edge"
 
 import MainContent from '../../../components/MainContent';
 import { useRouter, usePathname } from 'next/navigation';
@@ -63,10 +64,13 @@ export default function Section() {
                 <div className="grid place-content-center w-full h-[50vh]">
                   Loading...
                 </div>
+                
               ) : (
                 authors.map((item) => (
                   <li
                     key={item.id}
+                    title={item.title || item.name}
+                    name={item.name}
                     className="flex items-center border p-2 my-2 hover:bg-blue-500 hover:bg-opacity-25 cursor-pointer"
                     onClick={() => handleItemClick(item._id)}
                   >

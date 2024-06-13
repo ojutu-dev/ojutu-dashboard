@@ -1,6 +1,7 @@
 import connectToMongoDB from '../../../libs/mongodb';
 import Post from '../../../model/post';
 
+
 export default async function handler(req, res) {
   await connectToMongoDB(process.env.MONGODB_URI);
 

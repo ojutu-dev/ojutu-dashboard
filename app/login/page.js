@@ -1,4 +1,5 @@
 "use client";
+export const runtime = "edge"
 import { useState, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -20,6 +21,7 @@ export default function Login() {
   
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true)
 
     try {
       const result = await signIn('credentials', {
@@ -31,8 +33,10 @@ export default function Login() {
       if (result.error) {
         setError(result.error);
       } 
+      setLoading(false)
     } catch (error) {
       setError('An error occurred');
+      setLoading(false)
     }
   };
 
@@ -62,7 +66,7 @@ export default function Login() {
             required
           />
         </div>
-        <button type="submit" className="w-full py-2 text-white bg-blue-500 rounded hover:bg-blue-600">
+        <button type="submit" className="w-full py-2 text-white bg-blue-500 rounded hover:bg-blue-600" disabled={loading}>
         {loading ? (
               <div className="flex items-center justify-center">
                 <svg
