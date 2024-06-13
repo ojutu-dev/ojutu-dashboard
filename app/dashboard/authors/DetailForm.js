@@ -19,6 +19,7 @@ export default function DetailForm() {
   const [isEditing, setIsEditing] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (pathname) {
@@ -62,6 +63,8 @@ export default function DetailForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true)
+    
     try {
       const formDataCopy = { ...formData };
       if (formData.image && formData.image instanceof File) {
@@ -80,8 +83,10 @@ export default function DetailForm() {
         throw new Error('Failed to save author');
       }
       router.push(`/dashboard/${section}`);
+      setLoading(false)
     } catch (error) {
       console.error('Error submitting form:', error);
+      setLoading(false)
     }
   };
 
@@ -141,9 +146,12 @@ export default function DetailForm() {
           />
         </label>
       </div>
-      <div className="mt-4 flex items-center">
+      <div className="mt-4">
         <label className="w-full">
           Slug:
+        </label>
+
+        <div className="flex items-center">
           <input
             type="text"
             name="slug"
@@ -152,10 +160,16 @@ export default function DetailForm() {
             required
             className="p-2 border rounded w-full outline-none text-black"
           />
-        </label>
-        <button type="button" onClick={handleSlugGeneration} className="ml-2 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded">
+
+        <button
+          type="button"
+          onClick={handleSlugGeneration}
+          className="ml-2 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded w-3/12"
+        >
           Generate Slug
         </button>
+
+        </div>
       </div>
       <div className="mt-4">
         <label>
@@ -165,7 +179,6 @@ export default function DetailForm() {
             type="file"
             name="image"
             onChange={handleChange}
-            required
             className="p-2 border rounded w-full"
             accept="image/*"
           />
@@ -183,8 +196,28 @@ export default function DetailForm() {
         </label>
       </div>
       <div className="flex space-x-2 mt-4">
-        <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">
-          {isEditing ? 'Update' : 'Publish'}
+        <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded" disabled={loading}>
+        {loading ? (
+            <svg
+              class="animate-spin h-6 w-6"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle
+                class="stroke-current text-white opacity-75"
+                cx="12"
+                cy="12"
+                r="10"
+                fill="none"
+                stroke-width="4"
+              ></circle>
+            </svg>
+          ) : isEditing ? (
+            "Update"
+          ) : (
+            "Publish"
+          )}
         </button>
         <button type="button" onClick={handleCancel} className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded">
           Cancel

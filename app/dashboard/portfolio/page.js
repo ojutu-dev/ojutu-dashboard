@@ -1,5 +1,4 @@
 'use client';
-
 import MainContent from '../../../components/MainContent';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -64,6 +63,8 @@ export default function Section() {
                 portfolios.map((item) => (
                 <li
                   key={item._id}
+                  title={item.title || item.name}
+                  name={item.name}
                   className="flex items-center border hover:bg-blue-500 hover:bg-opacity-25 p-2 my-2 cursor-pointer"
                   onClick={() => handleItemClick(item._id)}
                 >

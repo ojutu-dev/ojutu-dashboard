@@ -1,47 +1,43 @@
 import connectToMongoDB from '../../../libs/mongodb';
 import Author from '../../../model/author';
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export default async function handler(req, res) {
   await connectToMongoDB(process.env.MONGODB_URI);
 
-  const { id } = req.query;
-
   if (req.method === 'GET') {
     try {
-      const author = await Author.findById(id);
-      if (!author) {
-        return res.status(404).json({ message: 'Author not found' });
-      }
-      res.status(200).json(author);
+      const authors = await Author.find();
+      res.status(200).json({success: true, data:authors});
     } catch (error) {
-      res.status(500).json({ message: 'Error fetching author', error });
+      res.status(500).json({ message: 'Error fetching authors', error });
     }
-  } else if (req.method === 'PUT') {
+  } else if (req.method === 'POST') {
     try {
       const { name, image, slug, description } = req.body;
-      const updatedAuthor = await Author.findByIdAndUpdate(
-        id,
-        { name, image, slug, description },
-        { new: true, runValidators: true }
-      );
-      if (!updatedAuthor) {
-        return res.status(404).json({ message: 'Author not found' });
-      }
-      res.status(200).json(updatedAuthor);
+
+      const uploadedImage = await cloudinary.uploader.upload(image, {
+        folder: 'ojutu',
+      });
+
+      const newAuthor = new Author({
+        name,
+        image: uploadedImage.secure_url,
+        slug,
+        description,
+      });
+      await newAuthor.save();
+      res.status(201).json(newAuthor);
     } catch (error) {
-      res.status(500).json({ message: 'Error updating author', error });
+      res.status(500).json({ message: 'Error creating author', error });
     }
-  } else if (req.method === 'DELETE') {
-    try {
-      const deletedAuthor = await Author.findByIdAndDelete(id);
-      if (!deletedAuthor) {
-        return res.status(404).json({ message: 'Author not found' });
-      }
-      res.status(200).json({ message: 'Author deleted' });
-    } catch (error) {
-      res.status(500).json({ message: 'Error deleting author', error });
-    }
-  } else {
+  }  else {
     res.status(405).json({ message: 'Method not allowed' });
   }
 }
