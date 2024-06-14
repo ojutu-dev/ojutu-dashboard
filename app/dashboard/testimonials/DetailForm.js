@@ -209,7 +209,7 @@ export default function DetailForm() {
           />
         </label>
         <button type="button" onClick={openImageSelectionModal} className="mt-2 bg-gray-500 hover:bg-gray-600 text-white p-2 rounded">
-          Select Image
+          Select Image From Cloud
         </button>
       </div>
       <div className="mt-4">

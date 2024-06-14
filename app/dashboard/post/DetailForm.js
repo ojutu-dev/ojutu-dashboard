@@ -345,7 +345,7 @@ export default function DetailForm() {
             onClick={() => setIsImageSelectionModalOpen({ header: true })}
             className="mt-2 bg-gray-500 hover:bg-gray-600 text-white p-2 rounded"
           >
-            Select Image
+            Select Image From Cloud
           </button>
         </label>
       </div>
@@ -373,7 +373,7 @@ export default function DetailForm() {
             onClick={() => setIsImageSelectionModalOpen({ featured: true })}
             className="mt-2 bg-gray-500 hover:bg-gray-600 text-white p-2 rounded"
           >
-            Select Image
+            Select Image From Cloud
           </button>
         </label>
       </div>
@@ -401,7 +401,7 @@ export default function DetailForm() {
             onClick={() => setIsImageSelectionModalOpen({ og: true })}
             className="mt-2 bg-gray-500 hover:bg-gray-600 text-white p-2 rounded"
           >
-            Select Image
+            Select Image From Cloud
           </button>
         </label>
       </div>
