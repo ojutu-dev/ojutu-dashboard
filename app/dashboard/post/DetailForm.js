@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { useContent } from "../../../context/ContentContext";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import Image from "next/image";
+import ImageSelectionModal from '../../../components/ImageSelectionModal';
 
 // Dynamically import JoditEditor to prevent issues with SSR
 const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
@@ -34,7 +35,12 @@ export default function DetailForm() {
   const [ogImagePreview, setOgImagePreview] = useState(null);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [authorOptions, setAuthorOptions] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false); // Confirmation modal state
+  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState({ // Image selection modal state
+    header: false,
+    featured: false,
+    og: false,
+  });
   const [loading, setLoading] = useState(false);
   const editor = useRef(null);
 
@@ -139,6 +145,20 @@ export default function DetailForm() {
     }
   };
 
+  const handleImageSelect = (imageUrl, type) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [type]: imageUrl,
+    }));
+    if (type === "headerImage") setHeaderImagePreview(imageUrl);
+    if (type === "featuredImage") setFeaturedImagePreview(imageUrl);
+    if (type === "ogImage") setOgImagePreview(imageUrl);
+    setIsImageSelectionModalOpen((prevState) => ({
+      ...prevState,
+      [type]: false,
+    }));
+  };
+
   const handleSlugGeneration = () => {
     setFormData((prevFormData) => ({
       ...prevFormData,
@@ -181,9 +201,9 @@ export default function DetailForm() {
         addItem(section, post);
       }
       router.push(`/dashboard/${section}`);
-      setLoading(false);
     } catch (error) {
       console.error("Error submitting form:", error);
+    } finally {
       setLoading(false);
     }
   };
@@ -292,14 +312,13 @@ export default function DetailForm() {
             className="p-2 border rounded w-full outline-none text-black"
           />
 
-        <button
-          type="button"
-          onClick={handleSlugGeneration}
-          className="ml-2 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded w-3/12"
-        >
-          Generate Slug
-        </button>
-
+          <button
+            type="button"
+            onClick={handleSlugGeneration}
+            className="ml-2 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded w-3/12"
+          >
+            Generate Slug
+          </button>
         </div>
       </div>
       <div className="mt-4">
@@ -321,6 +340,13 @@ export default function DetailForm() {
             className="p-2 border rounded w-full"
             accept="image/*"
           />
+          <button
+            type="button"
+            onClick={() => setIsImageSelectionModalOpen({ header: true })}
+            className="mt-2 bg-gray-500 hover:bg-gray-600 text-white p-2 rounded"
+          >
+            Select Image
+          </button>
         </label>
       </div>
       <div className="mt-4">
@@ -342,6 +368,13 @@ export default function DetailForm() {
             className="p-2 border rounded w-full"
             accept="image/*"
           />
+          <button
+            type="button"
+            onClick={() => setIsImageSelectionModalOpen({ featured: true })}
+            className="mt-2 bg-gray-500 hover:bg-gray-600 text-white p-2 rounded"
+          >
+            Select Image
+          </button>
         </label>
       </div>
       <div className="mt-4">
@@ -363,6 +396,13 @@ export default function DetailForm() {
             className="p-2 border rounded w-full"
             accept="image/*"
           />
+          <button
+            type="button"
+            onClick={() => setIsImageSelectionModalOpen({ og: true })}
+            className="mt-2 bg-gray-500 hover:bg-gray-600 text-white p-2 rounded"
+          >
+            Select Image
+          </button>
         </label>
       </div>
       <div className="mt-4">
@@ -435,18 +475,18 @@ export default function DetailForm() {
         >
           {loading ? (
             <svg
-              class="animate-spin h-6 w-6"
+              className="animate-spin h-6 w-6"
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
               <circle
-                class="stroke-current text-white opacity-75"
+                className="stroke-current text-white opacity-75"
                 cx="12"
                 cy="12"
                 r="10"
                 fill="none"
-                stroke-width="4"
+                strokeWidth="4"
               ></circle>
             </svg>
           ) : isEditing ? (
@@ -454,7 +494,6 @@ export default function DetailForm() {
           ) : (
             "Publish"
           )}
-          {/* {isEditing ? "Update" : "Publish"} */}
         </button>
         <button
           type="button"
@@ -477,6 +516,21 @@ export default function DetailForm() {
         isOpen={isModalOpen}
         onClose={closeModal}
         onConfirm={confirmDelete}
+      />
+      <ImageSelectionModal
+        isOpen={isImageSelectionModalOpen.header}
+        onClose={() => setIsImageSelectionModalOpen({ header: false })}
+        onSelectImage={(imageUrl) => handleImageSelect(imageUrl, "headerImage")}
+      />
+      <ImageSelectionModal
+        isOpen={isImageSelectionModalOpen.featured}
+        onClose={() => setIsImageSelectionModalOpen({ featured: false })}
+        onSelectImage={(imageUrl) => handleImageSelect(imageUrl, "featuredImage")}
+      />
+      <ImageSelectionModal
+        isOpen={isImageSelectionModalOpen.og}
+        onClose={() => setIsImageSelectionModalOpen({ og: false })}
+        onSelectImage={(imageUrl) => handleImageSelect(imageUrl, "ogImage")}
       />
     </form>
   );

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import ConfirmationModal from '../../../components/ConfirmationModal';
 import Image from 'next/image';
+import ImageSelectionModal from '../../../components/ImageSelectionModal';
 
 export default function DetailForm() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function DetailForm() {
   const [imagePreview, setImagePreview] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState(false);
 
   useEffect(() => {
     if (pathname) {
@@ -67,11 +69,18 @@ export default function DetailForm() {
     }
   };
 
+  const handleImageSelect = (imageUrl) => {
+    console.log("Selected Image URL:", imageUrl);  // Log the URL for debugging
+    setFormData({ ...formData, image: imageUrl });
+    setImagePreview(imageUrl);
+    setIsImageSelectionModalOpen(false);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const method = isEditing ? 'PUT' : 'POST';
     const url = isEditing ? `/api/testimony/${params.id}` : '/api/testimony';
-    setLoading(true)
+    setLoading(true);
 
     try {
       const formDataToSend = { ...formData };
@@ -87,7 +96,6 @@ export default function DetailForm() {
       }
 
       async function sendRequest() {
-        
         const response = await fetch(url, {
           method,
           headers: {
@@ -100,12 +108,11 @@ export default function DetailForm() {
         } else {
           console.error('Failed to save testimony');
         }
-        setLoading(false)
+        setLoading(false);
       }
-      
     } catch (error) {
       console.error('Error submitting form:', error);
-      setLoading(false)
+      setLoading(false);
     }
   };
 
@@ -114,7 +121,7 @@ export default function DetailForm() {
   };
 
   const handleDelete = () => {
-    setIsModalOpen(true); // Open the modal
+    setIsModalOpen(true);
   };
 
   const confirmDelete = async () => {
@@ -136,6 +143,14 @@ export default function DetailForm() {
 
   const closeModal = () => {
     setIsModalOpen(false);
+  };
+
+  const openImageSelectionModal = () => {
+    setIsImageSelectionModalOpen(true);
+  };
+
+  const closeImageSelectionModal = () => {
+    setIsImageSelectionModalOpen(false);
   };
 
   return (
@@ -194,6 +209,9 @@ export default function DetailForm() {
             accept="image/*"
           />
         </label>
+        <button type="button" onClick={openImageSelectionModal} className="mt-2 bg-gray-500 hover:bg-gray-600 text-white p-2 rounded">
+          Select Image
+        </button>
       </div>
       <div className="mt-4">
         <label>
@@ -212,20 +230,20 @@ export default function DetailForm() {
       </div>
       <div className="flex space-x-2 mt-4">
         <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded" disabled={loading}>
-        {loading ? (
+          {loading ? (
             <svg
-              class="animate-spin h-6 w-6"
+              className="animate-spin h-6 w-6"
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
               <circle
-                class="stroke-current text-white opacity-75"
+                className="stroke-current text-white opacity-75"
                 cx="12"
                 cy="12"
                 r="10"
                 fill="none"
-                stroke-width="4"
+                strokeWidth="4"
               ></circle>
             </svg>
           ) : isEditing ? (
@@ -247,6 +265,11 @@ export default function DetailForm() {
         isOpen={isModalOpen}
         onClose={closeModal}
         onConfirm={confirmDelete}
+      />
+      <ImageSelectionModal
+        isOpen={isImageSelectionModalOpen}
+        onClose={closeImageSelectionModal}
+        onSelectImage={handleImageSelect}
       />
     </form>
   );
