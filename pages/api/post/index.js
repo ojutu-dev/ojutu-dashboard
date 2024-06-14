@@ -24,7 +24,6 @@ export default async function handler(req, res) {
   } else if (req.method === 'POST') {
     const { title, description, slug, featuredImage, authorId, body, headerImage, ogImage, categoryId } = req.body;
     try {
-      console.log('Received post data:', req.body);
 
       const author = await Author.findById(authorId);
       const category = await Category.findById(categoryId);

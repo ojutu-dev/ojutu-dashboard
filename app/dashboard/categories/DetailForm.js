@@ -25,7 +25,6 @@ export default function ServiceDetailForm() {
       const pathParts = pathname.split('/');
       const sectionName = pathParts[pathParts.length - 2];
       setSection(sectionName);
-      console.log('Section set to:', sectionName); // Debugging line
     }
   }, [pathname]);
 
@@ -38,7 +37,6 @@ export default function ServiceDetailForm() {
           if (data) {
             setFormData(data);
             setIsEditing(true);
-            console.log('Editing item:', data); // Debugging line
           }
         } catch (error) {
           console.error('Error fetching category:', error);
