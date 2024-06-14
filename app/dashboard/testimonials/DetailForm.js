@@ -70,7 +70,6 @@ export default function DetailForm() {
   };
 
   const handleImageSelect = (imageUrl) => {
-    console.log("Selected Image URL:", imageUrl);  // Log the URL for debugging
     setFormData({ ...formData, image: imageUrl });
     setImagePreview(imageUrl);
     setIsImageSelectionModalOpen(false);

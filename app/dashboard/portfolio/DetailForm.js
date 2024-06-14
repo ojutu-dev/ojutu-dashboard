@@ -814,7 +814,6 @@ export default function DetailForm() {
   };
 
   const handleImageSelect = (imageUrl) => {
-    console.log("Selected Image URL:", imageUrl);  // Log the URL for debugging
     if (imageField) {
       setFormData((prevFormData) => ({
         ...prevFormData,
@@ -842,7 +841,6 @@ export default function DetailForm() {
     e.preventDefault();
     setLoading(true);
 
-    console.log("Form Data before submission:", formData);  // Log form data for debugging
 
     // Basic validation before submission
     if (
@@ -871,7 +869,6 @@ export default function DetailForm() {
         body: JSON.stringify(formData),
       });
 
-      console.log("Response from server:", response);  // Log the server response for debugging
 
       if (!response.ok) {
         const errorData = await response.json();

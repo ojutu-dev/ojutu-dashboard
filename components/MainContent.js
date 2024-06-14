@@ -20,7 +20,6 @@ export default function MainContent({ children }) {
 
   useEffect(() => {
     const allChildren = React.Children.toArray(children);
-    // console.log('All children:', allChildren);
 
     const findLiElements = (elements) => {
       let liElements = [];
@@ -37,13 +36,11 @@ export default function MainContent({ children }) {
     };
 
     const liElements = findLiElements(allChildren);
-    // console.log('LI elements:', liElements);
 
     if (searchQuery) {
       const filtered = liElements.filter(li => {
         const title = li.props.title || '';
         const name = li.props.name || '';
-        // console.log('LI Title:', title, 'LI Name:', name);
         return title.toLowerCase().includes(searchQuery.toLowerCase()) || 
                name.toLowerCase().includes(searchQuery.toLowerCase());
       }).map((li, index) => React.cloneElement(li, { key: index }));
