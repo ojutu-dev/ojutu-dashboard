@@ -25,7 +25,6 @@ export default async function handler(req, res) {
   } else if (req.method === 'POST') {
     const { title, company, slug, address, ogdescription, body, serviceId, brandId, keywords, mainImage, headerImage, otherImage, ogImage } = req.body;
     try {
-      console.log('Received portfolio data:', req.body);
 
       const brand = await Brand.findById(brandId);
       const keywordsData = await Keywords.find({ _id: { $in: keywords } });

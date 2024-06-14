@@ -33,7 +33,6 @@ export default function Section() {
 
         if (data.success) {
           setServices(data.data.reverse());
-          console.log(data)
         } else {
           setError('Failed to fetch Services');
         }

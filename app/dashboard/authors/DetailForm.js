@@ -1,8 +1,9 @@
-'use client';
+"use client"
 import { useRouter, usePathname, useParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import ConfirmationModal from '../../../components/ConfirmationModal';
 import Image from 'next/image';
+import ImageSelectionModal from '../../../components/ImageSelectionModal';
 
 export default function DetailForm() {
   const router = useRouter();
@@ -20,27 +21,42 @@ export default function DetailForm() {
   const [imagePreview, setImagePreview] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState(false);
 
   useEffect(() => {
-    if (pathname) {
-      const pathParts = pathname.split('/');
-      const sectionName = pathParts[pathParts.length - 2];
-      setSection(sectionName);
-    }
+    const pathParts = pathname.split('/');
+    const sectionName = pathParts[pathParts.length - 2];
+    setSection(sectionName);
   }, [pathname]);
 
   useEffect(() => {
-    if (params.id && section) {
+    if (params.id) {
       fetch(`/api/author/${params.id}`)
-        .then(response => response.json())
-        .then(data => {
-          setFormData(data);
-          setImagePreview(data.image);
-          setIsEditing(true);
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(responseData => {
+          if (responseData.success) {
+            const data = responseData.data;
+            setFormData({
+              id: data._id,
+              name: data.name,
+              slug: data.slug,
+              image: data.image,
+              description: data.description,
+            });
+            setImagePreview(data.image);
+            setIsEditing(true);
+          } else {
+            console.error('Unexpected data format:', responseData);
+          }
         })
         .catch(error => console.error('Error fetching author:', error));
     }
-  }, [params.id, section]);
+  }, [params.id]);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -57,14 +73,20 @@ export default function DetailForm() {
     }
   };
 
+  const handleImageSelect = (imageUrl) => {
+    setFormData({ ...formData, image: imageUrl });
+    setImagePreview(imageUrl);
+    setIsImageSelectionModalOpen(false);
+  };
+
   const handleSlugGeneration = () => {
     setFormData({ ...formData, slug: formData.name.toLowerCase().replace(/\s+/g, '-') });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true)
-    
+    setLoading(true);
+
     try {
       const formDataCopy = { ...formData };
       if (formData.image && formData.image instanceof File) {
@@ -83,10 +105,10 @@ export default function DetailForm() {
         throw new Error('Failed to save author');
       }
       router.push(`/dashboard/${section}`);
-      setLoading(false)
     } catch (error) {
       console.error('Error submitting form:', error);
-      setLoading(false)
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -95,7 +117,7 @@ export default function DetailForm() {
   };
 
   const handleDelete = async () => {
-    setIsModalOpen(true); // Open the modal
+    setIsModalOpen(true);
   };
 
   const confirmDelete = async () => {
@@ -110,12 +132,20 @@ export default function DetailForm() {
     } catch (error) {
       console.error('Error deleting item:', error);
     } finally {
-      setIsModalOpen(false); // Close the modal
+      setIsModalOpen(false);
     }
   };
 
   const closeModal = () => {
-    setIsModalOpen(false); // Close the modal
+    setIsModalOpen(false);
+  };
+
+  const openImageSelectionModal = () => {
+    setIsImageSelectionModalOpen(true);
+  };
+
+  const closeImageSelectionModal = () => {
+    setIsImageSelectionModalOpen(false);
   };
 
   const convertFileToBase64 = (file) => {
@@ -150,7 +180,6 @@ export default function DetailForm() {
         <label className="w-full">
           Slug:
         </label>
-
         <div className="flex items-center">
           <input
             type="text"
@@ -160,15 +189,13 @@ export default function DetailForm() {
             required
             className="p-2 border rounded w-full outline-none text-black"
           />
-
-        <button
-          type="button"
-          onClick={handleSlugGeneration}
-          className="ml-2 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded w-3/12"
-        >
-          Generate Slug
-        </button>
-
+          <button
+            type="button"
+            onClick={handleSlugGeneration}
+            className="ml-2 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded w-3/12"
+          >
+            Generate Slug
+          </button>
         </div>
       </div>
       <div className="mt-4">
@@ -183,6 +210,9 @@ export default function DetailForm() {
             accept="image/*"
           />
         </label>
+        <button type="button" onClick={openImageSelectionModal} className="mt-2 bg-gray-500 hover:bg-gray-600 text-white p-2 rounded">
+          Select Image From Cloud
+        </button>
       </div>
       <div className="mt-4">
         <label>
@@ -197,20 +227,20 @@ export default function DetailForm() {
       </div>
       <div className="flex space-x-2 mt-4">
         <button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded" disabled={loading}>
-        {loading ? (
+          {loading ? (
             <svg
-              class="animate-spin h-6 w-6"
+              className="animate-spin h-6 w-6"
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
               <circle
-                class="stroke-current text-white opacity-75"
+                className="stroke-current text-white opacity-75"
                 cx="12"
                 cy="12"
                 r="10"
                 fill="none"
-                stroke-width="4"
+                strokeWidth="4"
               ></circle>
             </svg>
           ) : isEditing ? (
@@ -232,6 +262,13 @@ export default function DetailForm() {
         isOpen={isModalOpen}
         onClose={closeModal}
         onConfirm={confirmDelete}
+        title="Delete Confirmation"
+        message="Are you sure you want to delete this author?"
+      />
+      <ImageSelectionModal
+        isOpen={isImageSelectionModalOpen}
+        onClose={closeImageSelectionModal}
+        onSelectImage={handleImageSelect}
       />
     </form>
   );
