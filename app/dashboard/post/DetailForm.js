@@ -61,7 +61,7 @@ export default function DetailForm() {
           const data = await response.json();
           if (response.ok) {
             setFormData({
-              ...data,
+              // ...data,
               id: data._id,
               title: data.title,
               slug: data.slug,
@@ -70,7 +70,7 @@ export default function DetailForm() {
               ogImage: data.ogImage,
               description: data.description,
               categoryId: data.category._id,
-              // authorId: data.author._id,
+              authorId: data.author._id,
               body: Array.isArray(data.body)
                 ? data.body.join("")
                 : data.body || "", // Convert body to string
