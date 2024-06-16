@@ -61,6 +61,7 @@ export default function DetailForm() {
           const data = await response.json();
           if (response.ok) {
             setFormData({
+              // ...data,
               id: data._id,
               title: data.title,
               slug: data.slug,

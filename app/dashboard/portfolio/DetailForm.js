@@ -18,7 +18,6 @@ export default function DetailForm() {
     title: "",
     company: "",
     slug: "",
-    categoryId: "",
     brandId: "",
     serviceId: "",
     mainImage: null,
@@ -34,14 +33,12 @@ export default function DetailForm() {
   const [mainImagePreview, setMainImagePreview] = useState(null);
   const [headerImagePreview, setHeaderImagePreview] = useState(null);
   const [otherImagePreview, setOtherImagePreview] = useState(null);
-  const [categoryOptions, setCategoryOptions] = useState([]);
   const [brandOptions, setBrandOptions] = useState([]);
   const [serviceOptions, setServiceOptions] = useState([]);
   const [keywordOptions, setKeywordOptions] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState(false);
   const [imageField, setImageField] = useState(null);
-  const [itemToDelete, setItemToDelete] = useState(null);
   const [loading, setLoading] = useState(false);
   const editor = useRef(null);
 
@@ -62,7 +59,6 @@ export default function DetailForm() {
           if (response.ok) {
             setFormData({
               ...item,
-              categoryId: item.category?._id || "",
               brandId: item.brand?._id || "",
               serviceId: item.service?._id || "",
               keywords: item.keywords?.map((k) => k._id) || [],
@@ -86,19 +82,6 @@ export default function DetailForm() {
   }, [params.id, section]);
 
   useEffect(() => {
-    const fetchCategoryOptions = async () => {
-      try {
-        const response = await fetch("/api/category");
-        const data = await response.json();
-        if (data.success !== false) {
-          setCategoryOptions(data.data || data);
-        } else {
-          console.error("Failed to fetch services");
-        }
-      } catch (error) {
-        console.error("Error fetching services:", error);
-      }
-    };
 
     const fetchBrandOptions = async () => {
       try {
@@ -142,7 +125,6 @@ export default function DetailForm() {
       }
     };
 
-    fetchCategoryOptions();
     fetchBrandOptions();
     fetchServiceOptions();
     fetchKeywordOptions();
@@ -207,7 +189,6 @@ export default function DetailForm() {
       !formData.title ||
       !formData.company ||
       !formData.slug ||
-      !formData.categoryId ||
       !formData.brandId ||
       !formData.serviceId ||
       !formData.keywords.length ||
@@ -238,9 +219,9 @@ export default function DetailForm() {
 
       const data = await response.json();
       if (isEditing) {
-        updateItem(section, data._id, data);
+        updateItem(section, data.id, data);
       } else {
-        addItem(section, data._id, data);
+        addItem(section, data);
       }
 
       router.push(`/dashboard/${section}`);
@@ -256,26 +237,25 @@ export default function DetailForm() {
   };
 
   const handleDelete = (itemId) => {
-    setItemToDelete(itemId);
     setIsModalOpen(true);
   };
 
   const confirmDelete = async () => {
     try {
-      const response = await fetch(`/api/portfolio/${itemToDelete}`, {
+      const response = await fetch(`/api/portfolio/${params.id}`, {
         method: "DELETE",
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to delete item");
+      if (response.ok) {
+        deleteItem(section, formData.id);
+        router.push(`/dashboard/${section}`);
+      } else {
+        console.error("Failed to delete post");
       }
-
-      deleteItem(section, itemToDelete);
-      router.push(`/dashboard/${section}`);
     } catch (error) {
-      console.error("Error deleting item:", error);
+      console.error("Error deleting post:", error);
     } finally {
-      setIsModalOpen(false);
+      setIsModalOpen(false); // Close the modal
     }
   };
 
@@ -383,25 +363,6 @@ export default function DetailForm() {
             Generate Slug
           </button>
         </div>
-      </div>
-      <div className="mt-4">
-        <label>
-          Category:
-          <select
-            name="categoryId"
-            value={formData.categoryId}
-            onChange={handleChange}
-            required
-            className="p-2 border rounded w-full outline-none text-black"
-          >
-            <option value="">Select Category</option>
-            {categoryOptions.map((category, index) => (
-              <option key={index} value={category._id}>
-                {category.title}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
       <div className="mt-4">
         <label>
