@@ -12,7 +12,7 @@ export const config = {
     },
   },
   
-  maxDuration: 50000,
+  maxDuration: 5,
 }
 
 cloudinary.config({
