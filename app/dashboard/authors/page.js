@@ -33,6 +33,7 @@ export default function Section() {
 
         if (data.success) {
           setAuthors(data.data.reverse()); // Reverse the array to show new records at the top
+          
         } else {
           setError('Failed to fetch Authors');
         }
