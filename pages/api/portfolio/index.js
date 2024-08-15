@@ -8,11 +8,11 @@ import { v2 as cloudinary } from 'cloudinary';
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '30mb',
+      sizeLimit: '50mb',
     },
   },
   
-  maxDuration: 5,
+  maxDuration: 10,
 }
 
 cloudinary.config({
