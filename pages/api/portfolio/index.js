@@ -8,12 +8,12 @@ import { v2 as cloudinary } from 'cloudinary';
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '50mb',
+      sizeLimit: '100mb',
     },
   },
   
   maxDuration: 10,
-}
+};
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -34,8 +34,8 @@ export default async function handler(req, res) {
     }
   } else if (req.method === 'POST') {
     const { title, company, slug, address, ogdescription, body, serviceId, brandId, keywords, mainImage, headerImage, otherImage, ogImage } = req.body;
+    
     try {
-
       const brand = await Brand.findById(brandId);
       const keywordsData = await Keywords.find({ _id: { $in: keywords } });
       const service = await Service.findById(serviceId);
@@ -50,7 +50,17 @@ export default async function handler(req, res) {
         throw new Error('Invalid service ID');
       }
 
-      const uploadBase64Image = async (base64Image) => {
+      const convertToBase64 = (imageBuffer) => {
+        if (imageBuffer) {
+          const base64Image = Buffer.from(imageBuffer).toString('base64');
+          const mimeType = 'image/jpeg'; // You can adjust the mime type based on the actual image type
+          return `data:${mimeType};base64,${base64Image}`;
+        }
+        return null;
+      };
+
+      const uploadBase64Image = async (imageBuffer) => {
+        const base64Image = convertToBase64(imageBuffer);
         if (base64Image) {
           const uploadResult = await cloudinary.uploader.upload(base64Image, { folder: 'ojutu' });
           return uploadResult.secure_url;
@@ -59,10 +69,10 @@ export default async function handler(req, res) {
       };
 
       const [mainImageUrl, headerImageUrl, otherImageUrl, ogImageUrl] = await Promise.all([
-        uploadBase64Image(mainImage),
-        uploadBase64Image(headerImage),
-        uploadBase64Image(otherImage),
-        uploadBase64Image(ogImage),
+        mainImage ? uploadBase64Image(mainImage) : null,
+        headerImage ? uploadBase64Image(headerImage) : null,
+        otherImage ? uploadBase64Image(otherImage) : null,
+        ogImage ? uploadBase64Image(ogImage) : null,
       ]);
 
       const newPortfolio = new Portfolio({
