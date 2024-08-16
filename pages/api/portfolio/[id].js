@@ -2,6 +2,16 @@ import connectToMongoDB from '../../../libs/mongodb';
 import Portfolio from '../../../model/portfolio';
 import { v2 as cloudinary } from 'cloudinary';
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '30mb',
+    },
+  },
+  
+  maxDuration: 5,
+}
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
