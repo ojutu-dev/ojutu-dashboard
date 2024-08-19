@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       const portfolios = await Portfolio.find().populate('brand').populate('service').populate('keywords');
-       // Map over the portfolios and extract only the needed fields
+
        const response = portfolios.map(portfolio => ({
         _id: portfolio._id,     
         title: portfolio.title,
