@@ -28,14 +28,15 @@ export default async function handler(req, res) {
     try {
       const portfolios = await Portfolio.find().populate('brand').populate('service').populate('keywords');
 
-       const response = portfolios.map(portfolio => ({
-        _id: portfolio._id,     
-        title: portfolio.title,
-        mainImage: portfolio.mainImage
-      }));
+      //  const response = portfolios.map(portfolio => ({
+      //   _id: portfolio._id,     
+      //   title: portfolio.title,
+      //   mainImage: portfolio.mainImage
+      // }));
+      
       res.status(200).json({ 
         success: true,
-        data: response 
+        data: portfolios 
       
       });
     } catch (error) {
