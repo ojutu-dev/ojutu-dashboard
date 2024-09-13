@@ -1,5 +1,8 @@
 import connectToMongoDB from '../../../libs/mongodb';
 import Portfolio from '../../../model/portfolio';
+import Brand from '../../../model/brand';
+import Keywords from '../../../model/keywords';
+import Service from '../../../model/service';
 import { v2 as cloudinary } from 'cloudinary';
 
 export const config = {
@@ -8,8 +11,9 @@ export const config = {
       sizeLimit: '30mb',
     },
   },
+  
   maxDuration: 5,
-};
+}
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -24,24 +28,17 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const portfolio = await Portfolio.findById(id)
-        .populate('service')
-        .populate('brand')
-        .populate('keywords');
+      const portfolio = await Portfolio.findById(id).populate('service').populate('brand').populate('keywords');
       if (!portfolio) {
         return res.status(404).json({ message: 'Portfolio not found' });
       }
       res.status(200).json(portfolio);
     } catch (error) {
-      console.error('Error fetching portfolio:', error);
       res.status(500).json({ message: 'Error fetching portfolio', error: error.message });
     }
   } else if (req.method === 'PUT') {
     try {
-      const {
-        title, company, slug, serviceId, address, brandId,
-        mainImage, headerImage, otherImage, ogImage, ogdescription, keywords, body,
-      } = req.body;
+      const { title, company, slug, serviceId, address, brandId, mainImage, headerImage, otherImage, ogImage, ogdescription, keywords, body } = req.body;
 
       const uploadImage = async (image) => {
         if (image && image.startsWith('data:image')) {
@@ -83,7 +80,6 @@ export default async function handler(req, res) {
       }
       res.status(200).json(updatedPortfolio);
     } catch (error) {
-      console.error('Error updating portfolio:', error);
       res.status(500).json({ message: 'Error updating portfolio', error: error.message });
     }
   } else if (req.method === 'DELETE') {
@@ -94,7 +90,6 @@ export default async function handler(req, res) {
       }
       res.status(200).json({ message: 'Portfolio deleted' });
     } catch (error) {
-      console.error('Error deleting portfolio:', error);
       res.status(500).json({ message: 'Error deleting portfolio', error: error.message });
     }
   } else {
