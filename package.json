@@ -22,7 +22,8 @@
         "next-cookies": "^2.0.3",
         "next-session": "^4.0.5",
         "react": "^18",
-        "react-dom": "^18"
+        "react-dom": "^18",
+        "react-quill": "^2.0.0"
     },
     "devDependencies": {
         "eslint": "^8",
