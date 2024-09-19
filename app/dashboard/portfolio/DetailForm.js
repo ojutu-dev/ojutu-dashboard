@@ -5,8 +5,11 @@ import dynamic from "next/dynamic";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import Image from "next/image";
 import ImageSelectionModal from "../../../components/ImageSelectionModal";
+import 'react-quill/dist/quill.snow.css';
 
-const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+
+
 
 export default function DetailForm() {
   const router = useRouter();
@@ -178,6 +181,16 @@ export default function DetailForm() {
   const handleBodyChange = (value) => {
     setFormData({ ...formData, body: value });
   };
+
+  const modules = useMemo(() => ({
+    toolbar:  [
+      [{ header: "1" }, { header: "2" }, { font: [] }],
+      [{ list: "ordered" }, { list: "bullet" }],
+      ["bold", "italic", "underline", "strike"],
+      ["link", "image"],
+      [{ align: [] }],
+    ]
+  }), []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -530,16 +543,13 @@ export default function DetailForm() {
         </label>
       </div>
       <div className="mt-4">
-        <label>
-          Body:
-          <JoditEditor
-            ref={editor}
+        <label>Body:</label>
+          <ReactQuill
             value={formData.body}
             onChange={handleBodyChange}
             config={config}
             className="bg-white"
           />
-        </label>
       </div>
       <div className="mt-4 flex gap-3">
         <button

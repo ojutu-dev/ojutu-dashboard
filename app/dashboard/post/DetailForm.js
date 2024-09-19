@@ -6,10 +6,10 @@ import dynamic from "next/dynamic";
 import { useContent } from "../../../context/ContentContext";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import Image from "next/image";
-import ImageSelectionModal from '../../../components/ImageSelectionModal';
+import ImageSelectionModal from "../../../components/ImageSelectionModal";
+import 'react-quill/dist/quill.snow.css';
 
-// Dynamically import JoditEditor to prevent issues with SSR
-const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
 export default function DetailForm() {
   const router = useRouter();
@@ -35,8 +35,8 @@ export default function DetailForm() {
   const [ogImagePreview, setOgImagePreview] = useState(null);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [authorOptions, setAuthorOptions] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false); // Confirmation modal state
-  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState({ // Image selection modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState({
     header: false,
     featured: false,
     og: false,
@@ -54,7 +54,6 @@ export default function DetailForm() {
 
   useEffect(() => {
     if (params.id && section) {
-      // Fetch the existing post data when in editing mode
       const fetchPostData = async () => {
         try {
           const response = await fetch(`/api/post/${params.id}`);
@@ -73,7 +72,7 @@ export default function DetailForm() {
               authorId: data.author._id,
               body: Array.isArray(data.body)
                 ? data.body.join("")
-                : data.body || "", // Convert body to string
+                : data.body || "",
             });
             setHeaderImagePreview(data.headerImage);
             setFeaturedImagePreview(data.featuredImage);
@@ -236,43 +235,50 @@ export default function DetailForm() {
   };
 
   const closeModal = () => {
-    setIsModalOpen(false); // Close the modal
+    setIsModalOpen(false);
   };
 
-  const config = useMemo(
+  const imageHandler = () => {
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', 'image/*');
+    input.click();
+
+    input.onchange = async () => {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Image = reader.result;
+        try {
+          const res = await fetch('/api/upload-images', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ data: base64Image }),
+          });
+          const result = await res.json();
+          const imageUrl = result.url;
+          const quill = this.quill;
+          const range = quill.getSelection();
+          quill.insertEmbed(range.index, 'image', imageUrl);
+        } catch (error) {
+          console.error('Error uploading image:', error);
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+  };
+
+  const quillModules = useMemo(
     () => ({
-      toolbarAdaptive: false,
-      buttons: "paragraph,|,bold,italic,ul,paste,selectall,file,image",
-      uploader: {
-        insertImageAsBase64URI: true,
-        imagesExtensions: ["jpg", "png", "jpeg", "gif"],
-        url: "/api/upload",
-        format: "json",
-        method: "POST",
-        headers: {
-          Authorization: "Bearer your-access-token",
-        },
-        filesVariableName: function (t) {
-          return "files[" + t + "]";
-        },
-        process: function (resp) {
-          return {
-            files: resp.files.map(function (file) {
-              return {
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                url: file.url,
-                thumb: file.url,
-                error: file.error,
-              };
-            }),
-            path: resp.path,
-            baseurl: resp.baseurl,
-          };
-        },
-      },
-      placeholder: "Start typing...",
+      toolbar: [
+        [{ header: "1" }, { header: "2" }, { font: [] }],
+        [{ list: "ordered" }, { list: "bullet" }],
+        ["bold", "italic", "underline", "strike"],
+        ["link", "image"],
+        [{ align: [] }],
+      ],
     }),
     []
   );
@@ -457,16 +463,13 @@ export default function DetailForm() {
         </label>
       </div>
       <div className="mt-4">
-        <label>
-          Body:
-          <JoditEditor
-            ref={editor}
+        <label>Body:</label>
+          <ReactQuill
             value={formData.body}
             onChange={handleBodyChange}
             config={config}
             className="bg-white"
           />
-        </label>
       </div>
       <div className="flex space-x-2 mt-4">
         <button
