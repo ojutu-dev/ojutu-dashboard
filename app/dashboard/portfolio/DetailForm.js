@@ -165,52 +165,14 @@ export default function DetailForm() {
     setFormData({ ...formData, body: value });
   };
 
-  const imageHandler = () => {
-    const input = document.createElement('input');
-    input.setAttribute('type', 'file');
-    input.setAttribute('accept', 'image/*');
-    input.click();
-
-    input.onchange = async () => {
-      const file = input.files[0];
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Image = reader.result;
-        try {
-          const res = await fetch('/api/upload-image', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ data: base64Image }),
-          });
-          const result = await res.json();
-          const imageUrl = result.url;
-          const quill = this.quill;
-          const range = quill.getSelection();
-          quill.insertEmbed(range.index, 'image', imageUrl);
-        } catch (error) {
-          console.error('Error uploading image:', error);
-        }
-      };
-      reader.readAsDataURL(file);
-    };
-  };
-
   const modules = useMemo(() => ({
-    toolbar: {
-      container: [
-        [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
-        [{ size: [] }],
-        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-        ['link', 'image', 'video'],
-        ['clean']
-      ],
-      handlers: {
-        image: imageHandler,
-      }
-    }
+    toolbar:  [
+      [{ header: "1" }, { header: "2" }, { font: [] }],
+      [{ list: "ordered" }, { list: "bullet" }],
+      ["bold", "italic", "underline", "strike"],
+      ["link", "image"],
+      [{ align: [] }],
+    ]
   }), []);
 
   const handleSubmit = async (e) => {
@@ -518,15 +480,13 @@ export default function DetailForm() {
         </label>
       </div>
       <div className="mt-4">
-        <label>
-          Body:
+        <label>Body:</label>
           <ReactQuill
             value={formData.body}
             onChange={handleBodyChange}
             modules={modules}
             className="bg-white h-64"
           />
-        </label>
       </div>
       <div className="mt-20 flex gap-3">
         <button

@@ -7,9 +7,8 @@ import { useContent } from "../../../context/ContentContext";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import Image from "next/image";
 import ImageSelectionModal from "../../../components/ImageSelectionModal";
-import 'react-quill/dist/quill.snow.css'; // Import Quill styles
+import 'react-quill/dist/quill.snow.css';
 
-// Dynamically import ReactQuill to prevent issues with SSR
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
 export default function DetailForm() {
@@ -36,8 +35,8 @@ export default function DetailForm() {
   const [ogImagePreview, setOgImagePreview] = useState(null);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [authorOptions, setAuthorOptions] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false); // Confirmation modal state
-  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState({ // Image selection modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState({
     header: false,
     featured: false,
     og: false,
@@ -54,7 +53,6 @@ export default function DetailForm() {
 
   useEffect(() => {
     if (params.id && section) {
-      // Fetch the existing post data when in editing mode
       const fetchPostData = async () => {
         try {
           const response = await fetch(`/api/post/${params.id}`);
@@ -72,7 +70,7 @@ export default function DetailForm() {
               authorId: data.author._id,
               body: Array.isArray(data.body)
                 ? data.body.join("")
-                : data.body || "", // Convert body to string
+                : data.body || "",
             });
             setHeaderImagePreview(data.headerImage);
             setFeaturedImagePreview(data.featuredImage);
@@ -279,19 +277,13 @@ export default function DetailForm() {
 
   const quillModules = useMemo(
     () => ({
-      toolbar: {
-        container: [
-          [{ header: "1" }, { header: "2" }, { font: [] }],
-          [{ list: "ordered" }, { list: "bullet" }],
-          ["bold", "italic", "underline", "strike"],
-          ["link", "image", "code-block"],
-          [{ align: [] }],
-          ["clean"],
-        ],
-        handlers: {
-          image: imageHandler,
-        },
-      },
+      toolbar: [
+        [{ header: "1" }, { header: "2" }, { font: [] }],
+        [{ list: "ordered" }, { list: "bullet" }],
+        ["bold", "italic", "underline", "strike"],
+        ["link", "image"],
+        [{ align: [] }],
+      ],
     }),
     []
   );
@@ -476,15 +468,13 @@ export default function DetailForm() {
         </label>
       </div>
       <div className="mt-4">
-        <label>
-          Body:
+        <label>Body:</label>
           <ReactQuill
             value={formData.body}
             onChange={handleBodyChange}
             modules={quillModules}
             className="bg-white h-64"
           />
-        </label>
       </div>
       <div className="flex space-x-2 mt-20">
         <button
