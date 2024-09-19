@@ -1,21 +1,19 @@
 import { useRouter, usePathname, useParams } from "next/navigation";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useContent } from "../../../context/ContentContext";
 import dynamic from "next/dynamic";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import Image from "next/image";
 import ImageSelectionModal from "../../../components/ImageSelectionModal";
-import 'react-quill/dist/quill.snow.css';
+import "react-quill/dist/quill.snow.css";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-
-
 
 export default function DetailForm() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
-  const { content, addItem, updateItem, deleteItem } = useContent();
+  const { addItem, updateItem, deleteItem } = useContent();
   const [formData, setFormData] = useState({
     id: Date.now(),
     title: "",
@@ -43,7 +41,6 @@ export default function DetailForm() {
   const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState(false);
   const [imageField, setImageField] = useState(null);
   const [loading, setLoading] = useState(false);
-  const editor = useRef(null);
 
   useEffect(() => {
     if (pathname) {
@@ -59,15 +56,14 @@ export default function DetailForm() {
         try {
           const response = await fetch(`/api/portfolio/${params.id}`);
           const item = await response.json();
+          console.log("Item:", item);
           if (response.ok) {
             setFormData({
               ...item,
               brandId: item.brand?._id || "",
               serviceId: item.service?._id || "",
               keywords: item.keywords?.map((k) => k._id) || [],
-              body: Array.isArray(item.body)
-                ? item.body.join("")
-                : item.body || "", // Ensure body is a string
+              body: Array.isArray(item.body) ? item.body.join("") : item.body || "",
             });
             setMainImagePreview(item.mainImage);
             setHeaderImagePreview(item.headerImage);
@@ -85,16 +81,11 @@ export default function DetailForm() {
   }, [params.id, section]);
 
   useEffect(() => {
-
     const fetchBrandOptions = async () => {
       try {
         const response = await fetch("/api/brand");
         const data = await response.json();
-        if (data.success !== false) {
-          setBrandOptions(data.data || data);
-        } else {
-          console.error("Failed to fetch brands");
-        }
+        setBrandOptions(data.data || data);
       } catch (error) {
         console.error("Error fetching brands:", error);
       }
@@ -104,11 +95,7 @@ export default function DetailForm() {
       try {
         const response = await fetch("/api/service");
         const data = await response.json();
-        if (data.success !== false) {
-          setServiceOptions(data.data || data);
-        } else {
-          console.error("Failed to fetch services");
-        }
+        setServiceOptions(data.data || data);
       } catch (error) {
         console.error("Error fetching services:", error);
       }
@@ -118,11 +105,7 @@ export default function DetailForm() {
       try {
         const response = await fetch("/api/keywords");
         const data = await response.json();
-        if (data.success !== false) {
-          setKeywordOptions(data.data || data);
-        } else {
-          console.error("Failed to fetch keywords");
-        }
+        setKeywordOptions(data.data || data);
       } catch (error) {
         console.error("Error fetching keywords:", error);
       }
@@ -182,22 +165,52 @@ export default function DetailForm() {
     setFormData({ ...formData, body: value });
   };
 
+  const imageHandler = () => {
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', 'image/*');
+    input.click();
+
+    input.onchange = async () => {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Image = reader.result;
+        try {
+          const res = await fetch('/api/upload-image', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ data: base64Image }),
+          });
+          const result = await res.json();
+          const imageUrl = result.url;
+          const quill = this.quill;
+          const range = quill.getSelection();
+          quill.insertEmbed(range.index, 'image', imageUrl);
+        } catch (error) {
+          console.error('Error uploading image:', error);
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+  };
+
   const modules = useMemo(() => ({
-    toolbar:  [
-      [{ header: "1" }, { header: "2" }, { font: [] }],
-      [{ list: "ordered" }, { list: "bullet" }],
-      ["bold", "italic", "underline", "strike"],
-      ["link", "image"],
-      [{ align: [] }],
-    ]
+    toolbar: [
+        [{ header: "1" }, { header: "2" }, { font: [] }],
+        [{ list: "ordered" }, { list: "bullet" }],
+        ["bold", "italic", "underline", "strike"],
+        ["link", "image"],
+        [{ align: [] }],
+      ],
   }), []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-
-    // Basic validation before submission
     if (
       !formData.title ||
       !formData.company ||
@@ -222,7 +235,6 @@ export default function DetailForm() {
         },
         body: JSON.stringify(formData),
       });
-
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -268,12 +280,8 @@ export default function DetailForm() {
     } catch (error) {
       console.error("Error deleting post:", error);
     } finally {
-      setIsModalOpen(false); // Close the modal
+      setIsModalOpen(false);
     }
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
   };
 
   const openImageSelectionModal = (field) => {
@@ -281,47 +289,8 @@ export default function DetailForm() {
     setIsImageSelectionModalOpen(true);
   };
 
-  const closeImageSelectionModal = () => {
-    setIsImageSelectionModalOpen(false);
-  };
-
-  const config = useMemo(
-    () => ({
-      toolbarAdaptive: false,
-      buttons: "paragraph,|,bold,italic,ul,paste,selectall,file,image",
-      uploader: {
-        insertImageAsBase64URI: true,
-        imagesExtensions: ["jpg", "png", "jpeg", "gif"],
-        url: "/api/upload",
-        format: "json",
-        method: "POST",
-        headers: {
-          Authorization: "Bearer your-access-token",
-        },
-        filesVariableName: function (t) {
-          return "files[" + t + "]";
-        },
-        process: function (resp) {
-          return {
-            files: resp.files.map(function (file) {
-              return {
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                url: file.url,
-                thumb: file.url,
-                error: file.error,
-              };
-            }),
-            path: resp.path,
-            baseurl: resp.baseurl,
-          };
-        },
-      },
-      placeholder: "Start typing...",
-    }),
-    []
-  );
+  const closeModal = () => setIsModalOpen(false);
+  const closeImageSelectionModal = () => setIsImageSelectionModalOpen(false);
 
   return (
     <form onSubmit={handleSubmit}>
@@ -547,11 +516,11 @@ export default function DetailForm() {
           <ReactQuill
             value={formData.body}
             onChange={handleBodyChange}
-            config={config}
-            className="bg-white"
+            modules={modules}
+            className="bg-white h-64"
           />
       </div>
-      <div className="mt-4 flex gap-3">
+      <div className="mt-20 flex gap-3">
         <button
           type="submit"
           className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded"
