@@ -10,14 +10,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
-  },
-};
-
 export default async function handler(req, res) {
   await connectToMongoDB(process.env.MONGODB_URI);
 
@@ -32,11 +24,17 @@ export default async function handler(req, res) {
   } else if (req.method === 'POST') {
     const { title, description, slug, featuredImage, authorId, body, headerImage, ogImage, categoryId } = req.body;
     try {
+
       const author = await Author.findById(authorId);
       const category = await Category.findById(categoryId);
 
-      if (!author) throw new Error(`Author with ID ${authorId} not found`);
-      if (!category) throw new Error(`Category with ID ${categoryId} not found`);
+      if (!author) {
+        throw new Error(`Author with ID ${authorId} not found`);
+      }
+
+      if (!category) {
+        throw new Error(`Category with ID ${categoryId} not found`);
+      }
 
       const uploadBase64Image = async (base64Image) => {
         if (base64Image) {

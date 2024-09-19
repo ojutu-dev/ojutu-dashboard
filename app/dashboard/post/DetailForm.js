@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname, useParams } from "next/navigation";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useContent } from "../../../context/ContentContext";
 import ConfirmationModal from "../../../components/ConfirmationModal";
@@ -42,6 +42,7 @@ export default function DetailForm() {
     og: false,
   });
   const [loading, setLoading] = useState(false);
+  const editor = useRef(null);
 
   useEffect(() => {
     if (pathname) {
@@ -59,6 +60,7 @@ export default function DetailForm() {
           const data = await response.json();
           if (response.ok) {
             setFormData({
+              // ...data,
               id: data._id,
               title: data.title,
               slug: data.slug,
@@ -160,21 +162,14 @@ export default function DetailForm() {
   const handleSlugGeneration = () => {
     setFormData((prevFormData) => ({
       ...prevFormData,
-      slug: prevFormData.title
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w\-]+/g, '')
-        .replace(/\-\-+/g, '-')
-        .replace(/^-+/, '')
-        .replace(/-+$/, '')
+      slug: prevFormData.title.toLowerCase().replace(/\s+/g, "-"),
     }));
   };
-  
 
   const handleBodyChange = (value) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
-      body: value || "",
+      body: value || "", // Ensure body is always a string
     }));
   };
 
@@ -218,7 +213,7 @@ export default function DetailForm() {
   };
 
   const handleDelete = () => {
-    setIsModalOpen(true);
+    setIsModalOpen(true); // Open the modal
   };
 
   const confirmDelete = async () => {
@@ -235,7 +230,7 @@ export default function DetailForm() {
     } catch (error) {
       console.error("Error deleting post:", error);
     } finally {
-      setIsModalOpen(false);
+      setIsModalOpen(false); // Close the modal
     }
   };
 
@@ -472,11 +467,11 @@ export default function DetailForm() {
           <ReactQuill
             value={formData.body}
             onChange={handleBodyChange}
-            modules={quillModules}
-            className="bg-white h-64"
+            config={config}
+            className="bg-white"
           />
       </div>
-      <div className="flex space-x-2 mt-20">
+      <div className="flex space-x-2 mt-4">
         <button
           type="submit"
           className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
