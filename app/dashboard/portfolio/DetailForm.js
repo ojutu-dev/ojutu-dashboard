@@ -5,8 +5,11 @@ import dynamic from "next/dynamic";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import Image from "next/image";
 import ImageSelectionModal from "../../../components/ImageSelectionModal";
+import 'react-quill/dist/quill.snow.css';
 
-const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+
+
 
 export default function DetailForm() {
   const router = useRouter();
