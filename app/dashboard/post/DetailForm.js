@@ -1,14 +1,15 @@
 "use client";
 
 import { useRouter, usePathname, useParams } from "next/navigation";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useContent } from "../../../context/ContentContext";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import Image from "next/image";
 import ImageSelectionModal from "../../../components/ImageSelectionModal";
-import 'react-quill/dist/quill.snow.css';
+import 'react-quill/dist/quill.snow.css'; // Import Quill styles
 
+// Dynamically import ReactQuill to prevent issues with SSR
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
 export default function DetailForm() {
@@ -35,14 +36,13 @@ export default function DetailForm() {
   const [ogImagePreview, setOgImagePreview] = useState(null);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [authorOptions, setAuthorOptions] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState({
+  const [isModalOpen, setIsModalOpen] = useState(false); // Confirmation modal state
+  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState({ // Image selection modal state
     header: false,
     featured: false,
     og: false,
   });
   const [loading, setLoading] = useState(false);
-  const editor = useRef(null);
 
   useEffect(() => {
     if (pathname) {
@@ -54,13 +54,13 @@ export default function DetailForm() {
 
   useEffect(() => {
     if (params.id && section) {
+      // Fetch the existing post data when in editing mode
       const fetchPostData = async () => {
         try {
           const response = await fetch(`/api/post/${params.id}`);
           const data = await response.json();
           if (response.ok) {
             setFormData({
-              // ...data,
               id: data._id,
               title: data.title,
               slug: data.slug,
@@ -72,7 +72,7 @@ export default function DetailForm() {
               authorId: data.author._id,
               body: Array.isArray(data.body)
                 ? data.body.join("")
-                : data.body || "",
+                : data.body || "", // Convert body to string
             });
             setHeaderImagePreview(data.headerImage);
             setFeaturedImagePreview(data.featuredImage);
@@ -162,14 +162,21 @@ export default function DetailForm() {
   const handleSlugGeneration = () => {
     setFormData((prevFormData) => ({
       ...prevFormData,
-      slug: prevFormData.title.toLowerCase().replace(/\s+/g, "-"),
+      slug: prevFormData.title
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^\w\-]+/g, '')
+        .replace(/\-\-+/g, '-')
+        .replace(/^-+/, '')
+        .replace(/-+$/, '')
     }));
   };
+  
 
   const handleBodyChange = (value) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
-      body: value || "", // Ensure body is always a string
+      body: value || "",
     }));
   };
 
@@ -213,7 +220,7 @@ export default function DetailForm() {
   };
 
   const handleDelete = () => {
-    setIsModalOpen(true); // Open the modal
+    setIsModalOpen(true);
   };
 
   const confirmDelete = async () => {
@@ -230,7 +237,7 @@ export default function DetailForm() {
     } catch (error) {
       console.error("Error deleting post:", error);
     } finally {
-      setIsModalOpen(false); // Close the modal
+      setIsModalOpen(false);
     }
   };
 
@@ -238,41 +245,9 @@ export default function DetailForm() {
     setIsModalOpen(false);
   };
 
-  const imageHandler = () => {
-    const input = document.createElement('input');
-    input.setAttribute('type', 'file');
-    input.setAttribute('accept', 'image/*');
-    input.click();
-
-    input.onchange = async () => {
-      const file = input.files[0];
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Image = reader.result;
-        try {
-          const res = await fetch('/api/upload-images', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ data: base64Image }),
-          });
-          const result = await res.json();
-          const imageUrl = result.url;
-          const quill = this.quill;
-          const range = quill.getSelection();
-          quill.insertEmbed(range.index, 'image', imageUrl);
-        } catch (error) {
-          console.error('Error uploading image:', error);
-        }
-      };
-      reader.readAsDataURL(file);
-    };
-  };
-
   const quillModules = useMemo(
     () => ({
-      toolbar: [
+      toolbar:[
         [{ header: "1" }, { header: "2" }, { font: [] }],
         [{ list: "ordered" }, { list: "bullet" }],
         ["bold", "italic", "underline", "strike"],
@@ -467,11 +442,11 @@ export default function DetailForm() {
           <ReactQuill
             value={formData.body}
             onChange={handleBodyChange}
-            config={config}
-            className="bg-white"
+            modules={quillModules}
+            className="bg-white h-64"
           />
       </div>
-      <div className="flex space-x-2 mt-4">
+      <div className="flex space-x-2 mt-20">
         <button
           type="submit"
           className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
