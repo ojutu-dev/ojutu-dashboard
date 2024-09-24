@@ -126,20 +126,19 @@ export default function DetailForm() {
           ...prevFormData,
           [name]: reader.result,
         }));
-        if (name === "mainImage") setMainImagePreview(reader.result);
-        if (name === "headerImage") setHeaderImagePreview(reader.result);
-        if (name === "otherImage") setOtherImagePreview(reader.result);
+        if (name === 'mainImage') setMainImagePreview(reader.result);
+        if (name === 'headerImage') setHeaderImagePreview(reader.result);
+        if (name === 'otherImage') setOtherImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
-    } else if (name === "keywords") {
-      const newKeywords = formData.keywords.includes(value)
-        ? formData.keywords.filter((keyword) => keyword !== value)
-        : [...formData.keywords, value];
-      setFormData({ ...formData, keywords: newKeywords });
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        [name]: value,
+      }));
     }
   };
+  
 
   const handleImageSelect = (imageUrl) => {
     if (imageField) {
