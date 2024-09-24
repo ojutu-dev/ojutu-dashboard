@@ -52,6 +52,9 @@ export default function DetailForm() {
     }
   }, [pathname]);
 
+
+ 
+
   useEffect(() => {
     if (params.id && section) {
       // Fetch the existing post data when in editing mode
@@ -88,6 +91,8 @@ export default function DetailForm() {
       fetchPostData();
     }
   }, [params.id, section]);
+
+
 
   useEffect(() => {
     const fetchCategoryOptions = async () => {

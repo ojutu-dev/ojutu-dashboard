@@ -50,6 +50,8 @@ export default function DetailForm() {
     }
   }, [pathname]);
 
+  
+
   useEffect(() => {
     if (params.id && section) {
       const fetchItem = async () => {
@@ -58,7 +60,7 @@ export default function DetailForm() {
           const item = await response.json();
           console.log("Item:", item);
           if (response.ok) {
-            setFormData({
+            setFormData({             
               ...item,
               brandId: item.brand?._id || "",
               serviceId: item.service?._id || "",
@@ -138,6 +140,7 @@ export default function DetailForm() {
       setFormData({ ...formData, keywords: newKeywords });
     } else {
       setFormData({ ...formData, [name]: value });
+      
     }
   };
 
