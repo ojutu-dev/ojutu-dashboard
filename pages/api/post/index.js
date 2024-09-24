@@ -2,13 +2,7 @@ import connectToMongoDB from '../../../libs/mongodb';
 import Post from '../../../model/post';
 import Author from '../../../model/author';
 import Category from '../../../model/category';
-import { v2 as cloudinary } from 'cloudinary';
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+import cloudinary from '../../../libs/cloudinary';
 
 export default async function handler(req, res) {
   await connectToMongoDB(process.env.MONGODB_URI);
@@ -24,7 +18,6 @@ export default async function handler(req, res) {
   } else if (req.method === 'POST') {
     const { title, description, slug, featuredImage, authorId, body, headerImage, ogImage, categoryId } = req.body;
     try {
-
       const author = await Author.findById(authorId);
       const category = await Category.findById(categoryId);
 
