@@ -14,6 +14,9 @@ export default function DetailForm() {
   const pathname = usePathname();
   const params = useParams();
   const { addItem, updateItem, deleteItem } = useContent();
+
+  const section = pathname ? pathname.split("/")[pathname.split("/").length - 2] : "";
+
   const [formData, setFormData] = useState({
     id: Date.now(),
     title: "",
@@ -29,45 +32,47 @@ export default function DetailForm() {
     keywords: [],
     body: "",
   });
-  const [section, setSection] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
+
   const [mainImagePreview, setMainImagePreview] = useState(null);
   const [headerImagePreview, setHeaderImagePreview] = useState(null);
   const [otherImagePreview, setOtherImagePreview] = useState(null);
   const [brandOptions, setBrandOptions] = useState([]);
   const [serviceOptions, setServiceOptions] = useState([]);
   const [keywordOptions, setKeywordOptions] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState(false);
   const [imageField, setImageField] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (pathname) {
-      const pathParts = pathname.split("/");
-      const sectionName = pathParts[pathParts.length - 2];
-      setSection(sectionName);
-    }
-  }, [pathname]);
-
-  useEffect(() => {
-    if (params.id && section) {
+    if (params.id) {
       const fetchItem = async () => {
         try {
           const response = await fetch(`/api/portfolio/${params.id}`);
           const item = await response.json();
-          console.log("Item:", item);
+
           if (response.ok) {
-            setFormData({
-              ...item,
+            setFormData((prevFormData) => ({
+              ...prevFormData,
+              title: item.title || "",
+              company: item.company || "",
+              slug: item.slug || "",
               brandId: item.brand?._id || "",
               serviceId: item.service?._id || "",
               keywords: item.keywords?.map((k) => k._id) || [],
+              address: item.address || "",
+              ogdescription: item.ogdescription || "",
               body: Array.isArray(item.body) ? item.body.join("") : item.body || "",
-            });
+              mainImage: item.mainImage || null,
+              headerImage: item.headerImage || null,
+              otherImage: item.otherImage || null,
+            }));
+
             setMainImagePreview(item.mainImage);
             setHeaderImagePreview(item.headerImage);
             setOtherImagePreview(item.otherImage);
+
             setIsEditing(true);
           } else {
             console.error("Failed to fetch item:", item);
@@ -76,10 +81,12 @@ export default function DetailForm() {
           console.error("Error fetching item:", error);
         }
       };
+
       fetchItem();
     }
-  }, [params.id, section]);
+  }, [params.id]); 
 
+  
   useEffect(() => {
     const fetchBrandOptions = async () => {
       try {
@@ -124,13 +131,13 @@ export default function DetailForm() {
       reader.onloadend = () => {
         setFormData((prevFormData) => ({
           ...prevFormData,
-          [name]: reader.result,
+          [name]: reader.result, 
         }));
-        if (name === 'mainImage') setMainImagePreview(reader.result);
-        if (name === 'headerImage') setHeaderImagePreview(reader.result);
-        if (name === 'otherImage') setOtherImagePreview(reader.result);
+        if (name === "mainImage") setMainImagePreview(reader.result);
+        if (name === "headerImage") setHeaderImagePreview(reader.result);
+        if (name === "otherImage") setOtherImagePreview(reader.result);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(file); 
     } else {
       setFormData((prevFormData) => ({
         ...prevFormData,
@@ -138,7 +145,6 @@ export default function DetailForm() {
       }));
     }
   };
-  
 
   const handleImageSelect = (imageUrl) => {
     if (imageField) {
@@ -154,57 +160,18 @@ export default function DetailForm() {
   };
 
   const handleSlugGeneration = () => {
-    setFormData({
-      ...formData,
-      slug: formData.title.toLowerCase().replace(/\s+/g, "-"),
-    });
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      slug: prevFormData.title.toLowerCase().replace(/\s+/g, "-"),
+    }));
   };
 
   const handleBodyChange = (value) => {
-    setFormData({ ...formData, body: value });
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      body: value,
+    }));
   };
-
-  const imageHandler = () => {
-    const input = document.createElement('input');
-    input.setAttribute('type', 'file');
-    input.setAttribute('accept', 'image/*');
-    input.click();
-
-    input.onchange = async () => {
-      const file = input.files[0];
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64Image = reader.result;
-        try {
-          const res = await fetch('/api/upload-image', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ data: base64Image }),
-          });
-          const result = await res.json();
-          const imageUrl = result.url;
-          const quill = this.quill;
-          const range = quill.getSelection();
-          quill.insertEmbed(range.index, 'image', imageUrl);
-        } catch (error) {
-          console.error('Error uploading image:', error);
-        }
-      };
-      reader.readAsDataURL(file);
-    };
-  };
-
-  const modules = useMemo(() => ({
-    toolbar: [
-        [{ header: "1" }, { header: "2" }, { font: [] }],
-        [{ list: "ordered" }, { list: "bullet" }],
-        ["bold", "italic", "underline", "strike"],
-        ["link", "image"],
-        [{ align: [] }],
-      ],
-  }), []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -291,14 +258,23 @@ export default function DetailForm() {
   const closeModal = () => setIsModalOpen(false);
   const closeImageSelectionModal = () => setIsImageSelectionModalOpen(false);
 
+  const modules = useMemo(() => ({
+    toolbar: [
+      [{ header: "1" }, { header: "2" }, { font: [] }],
+      [{ list: "ordered" }, { list: "bullet" }],
+      ["bold", "italic", "underline", "strike"],
+      ["link", "image"],
+      [{ align: [] }],
+    ],
+  }), []);
+
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-8">
         <h2 className="text-2xl font-bold">Portfolio:</h2>
-        {formData.title && (
-          <div className="text-lg font-bold">{formData.title}</div>
-        )}
+        {formData.title && <div className="text-lg font-bold">{formData.title}</div>}
       </div>
+
       <div>
         <label>
           Title:
@@ -312,6 +288,7 @@ export default function DetailForm() {
           />
         </label>
       </div>
+
       <div className="mt-4">
         <label>
           Company:
@@ -325,6 +302,7 @@ export default function DetailForm() {
           />
         </label>
       </div>
+
       <div className="mt-4">
         <label className="w-full">Slug:</label>
         <div className="flex items-center">
@@ -345,6 +323,7 @@ export default function DetailForm() {
           </button>
         </div>
       </div>
+
       <div className="mt-4">
         <label>
           Brand:
@@ -364,6 +343,7 @@ export default function DetailForm() {
           </select>
         </label>
       </div>
+
       <div className="mt-4">
         <label>
           Service:
@@ -383,6 +363,7 @@ export default function DetailForm() {
           </select>
         </label>
       </div>
+
       <div className="mt-4">
         <label>
           Keywords:
@@ -401,6 +382,7 @@ export default function DetailForm() {
           ))}
         </label>
       </div>
+
       <div className="mt-4">
         <label>
           Main Image:
@@ -429,6 +411,7 @@ export default function DetailForm() {
           </button>
         </label>
       </div>
+
       <div className="mt-4">
         <label>
           Header Image:
@@ -457,6 +440,7 @@ export default function DetailForm() {
           </button>
         </label>
       </div>
+
       <div className="mt-4">
         <label>
           Other Image:
@@ -485,6 +469,7 @@ export default function DetailForm() {
           </button>
         </label>
       </div>
+
       <div className="mt-4">
         <label>
           Address:
@@ -498,6 +483,7 @@ export default function DetailForm() {
           />
         </label>
       </div>
+
       <div className="mt-4">
         <label>
           Description:
@@ -510,15 +496,17 @@ export default function DetailForm() {
           />
         </label>
       </div>
+
       <div className="mt-4">
         <label>Body:</label>
-          <ReactQuill
-            value={formData.body}
-            onChange={handleBodyChange}
-            modules={modules}
-            className="bg-white h-64"
-          />
+        <ReactQuill
+          value={formData.body}
+          onChange={handleBodyChange}
+          modules={modules}
+          className="bg-white h-64"
+        />
       </div>
+
       <div className="mt-20 flex gap-3">
         <button
           type="submit"
@@ -564,6 +552,7 @@ export default function DetailForm() {
           </button>
         )}
       </div>
+
       <ConfirmationModal
         isOpen={isModalOpen}
         onClose={closeModal}
