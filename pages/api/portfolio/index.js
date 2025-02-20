@@ -30,14 +30,12 @@ export default async function handler(req, res) {
         portfolio = await Portfolio.findOne({ slug })
           .populate('service', 'title')
           .populate('brand', 'title')
-          .populate('keywords', 'title')
-          .select('_id title ogdescription mainImage body slug company address');
+          .populate('keywords', 'title');
       } else if (id) {
         portfolio = await Portfolio.findById(id)
           .populate('service', 'name')
           .populate('brand', 'name')
-          .populate('keywords', 'name')
-          .select('_id title ogdescription mainImage body slug mainImage headerImage otherImage ogImage');
+          .populate('keywords', 'name');
       } else {
         portfolio = await Portfolio.find()
           .populate('brand')
@@ -79,7 +77,6 @@ export default async function handler(req, res) {
         throw new Error('Invalid service ID');
       }
 
-      // Upload the base64 images directly
       const uploadBase64Image = async (base64Image) => {
         if (base64Image) {
           const uploadResult = await cloudinary.uploader.upload(base64Image, { folder: 'ojutu' });
