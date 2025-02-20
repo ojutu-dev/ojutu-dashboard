@@ -15,11 +15,11 @@ export default async function handler(req, res) {
 
       if (slug) {
         posts = await Post.findOne({ slug })
-          .populate('author', 'name email')
+          .populate('author', 'name email image')
           .populate('category', 'title');
       } else if (id) {
         posts = await Post.findById(id)
-          .populate('author', 'name email')
+          .populate('author', 'name email image')
           .populate('category', 'title');
       } else {
         posts = await Post.find()
