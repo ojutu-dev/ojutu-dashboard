@@ -8,7 +8,7 @@ import { v2 as cloudinary } from 'cloudinary';
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '100mb', // Ensure large images can be handled
+      sizeLimit: '100mb', 
     },
   },
 };
@@ -24,7 +24,10 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const portfolios = await Portfolio.find().populate('brand').populate('service').populate('keywords');
+      const portfolios = await Portfolio.find().populate('brand')
+      .populate('service')
+      .populate('keywords')
+      .select('_id, title ogdescription mainImage slug');
       res.status(200).json({
         success: true,
         data: portfolios,
