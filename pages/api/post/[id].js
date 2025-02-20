@@ -5,14 +5,31 @@ import cloudinary from '../../../libs/cloudinary';
 export default async function handler(req, res) {
   await connectToMongoDB(process.env.MONGODB_URI);
 
-  const { id } = req.query;
+  const { id, slug } = req.query; // ✅ Get both `id` and `slug`
 
   if (req.method === 'GET') {
     try {
-      const post = await Post.findById(id).populate('author').populate('category');
+      let post;
+
+      if (slug) {
+        // ✅ Fetch by slug and select only required fields
+        post = await Post.findOne({ slug })
+          .populate('author', 'name email') // ✅ Only return `name` and `email`
+          .populate('category', 'name') // ✅ Only return `name`
+          .select('_id title slug description featuredImage headerImage ogImage body createdAt'); // ✅ Select only required fields
+      } else if (id) {
+        // ✅ Fetch by ID if no slug is provided
+        post = await Post.findById(id)
+          .populate('author', 'name email')
+          .populate('category', 'name')
+          .select('_id title slug description featuredImage headerImage ogImage body createdAt');
+      }
+
       if (!post) {
         return res.status(404).json({ message: 'Post not found' });
       }
+
+      // ✅ Send only selected fields in response
       res.status(200).json(post);
     } catch (error) {
       console.error('Error fetching post:', error);
@@ -50,7 +67,7 @@ export default async function handler(req, res) {
           category: categoryId,
         },
         { new: true, runValidators: true }
-      );
+      ).select('_id title slug description featuredImage headerImage ogImage body createdAt');
 
       if (!updatedPost) {
         return res.status(404).json({ message: 'Post not found' });
