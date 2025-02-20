@@ -15,7 +15,9 @@ export default function DetailForm() {
   const params = useParams();
   const { addItem, updateItem, deleteItem } = useContent();
 
-  const section = pathname ? pathname.split("/")[pathname.split("/").length - 2] : "";
+  const section = pathname
+    ? pathname.split("/")[pathname.split("/").length - 2]
+    : "";
 
   const [formData, setFormData] = useState({
     id: Date.now(),
@@ -41,7 +43,8 @@ export default function DetailForm() {
   const [keywordOptions, setKeywordOptions] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState(false);
+  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] =
+    useState(false);
   const [imageField, setImageField] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -63,7 +66,9 @@ export default function DetailForm() {
               keywords: item.keywords?.map((k) => k._id) || [],
               address: item.address || "",
               ogdescription: item.ogdescription || "",
-              body: Array.isArray(item.body) ? item.body.join("") : item.body || "",
+              body: Array.isArray(item.body)
+                ? item.body.join("")
+                : item.body || "",
               mainImage: item.mainImage || null,
               headerImage: item.headerImage || null,
               otherImage: item.otherImage || null,
@@ -84,9 +89,8 @@ export default function DetailForm() {
 
       fetchItem();
     }
-  }, [params.id]); 
+  }, [params.id]);
 
-  
   useEffect(() => {
     const fetchBrandOptions = async () => {
       try {
@@ -131,13 +135,13 @@ export default function DetailForm() {
       reader.onloadend = () => {
         setFormData((prevFormData) => ({
           ...prevFormData,
-          [name]: reader.result, 
+          [name]: reader.result,
         }));
         if (name === "mainImage") setMainImagePreview(reader.result);
         if (name === "headerImage") setHeaderImagePreview(reader.result);
         if (name === "otherImage") setOtherImagePreview(reader.result);
       };
-      reader.readAsDataURL(file); 
+      reader.readAsDataURL(file);
     } else {
       setFormData((prevFormData) => ({
         ...prevFormData,
@@ -258,21 +262,26 @@ export default function DetailForm() {
   const closeModal = () => setIsModalOpen(false);
   const closeImageSelectionModal = () => setIsImageSelectionModalOpen(false);
 
-  const modules = useMemo(() => ({
-    toolbar: [
-      [{ header: "1" }, { header: "2" }, { font: [] }],
-      [{ list: "ordered" }, { list: "bullet" }],
-      ["bold", "italic", "underline", "strike"],
-      ["link", "image"],
-      [{ align: [] }],
-    ],
-  }), []);
+  const modules = useMemo(
+    () => ({
+      toolbar: [
+        [{ header: "1" }, { header: "2" }, { font: [] }],
+        [{ list: "ordered" }, { list: "bullet" }],
+        ["bold", "italic", "underline", "strike"],
+        ["link", "image"],
+        [{ align: [] }],
+      ],
+    }),
+    []
+  );
 
   return (
     <form onSubmit={handleSubmit}>
       <div className="mb-8">
         <h2 className="text-2xl font-bold">Portfolio:</h2>
-        {formData.title && <div className="text-lg font-bold">{formData.title}</div>}
+        {formData.title && (
+          <div className="text-lg font-bold">{formData.title}</div>
+        )}
       </div>
 
       <div>
@@ -472,15 +481,18 @@ export default function DetailForm() {
 
       <div className="mt-4">
         <label>
-          Address:
-          <input
-            type="text"
+          Project Class:
+          <select
             name="address"
             value={formData.address}
             onChange={handleChange}
             required
             className="p-2 border rounded w-full outline-none text-black"
-          />
+          >
+            <option value="">Select Project Class</option>
+            <option value="New Website">New Website</option>
+            <option value="Redesign Project">Redesign Project</option>
+          </select>
         </label>
       </div>
 
