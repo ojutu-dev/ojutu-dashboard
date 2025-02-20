@@ -12,7 +12,7 @@ export default async function handler(req, res) {
       const posts = await Post.find()
       .populate('author')
       .populate('category')
-      .select('title description slug featuredImage authorId categoryId ogImage');
+      .select('_id title description slug featuredImage authorId categoryId ogImage');
       res.status(200).json({ success: true, data: posts });
     } catch (error) {
       console.error('Error fetching posts:', error);
