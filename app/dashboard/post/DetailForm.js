@@ -57,7 +57,7 @@ export default function DetailForm() {
      
       const fetchPostData = async () => {
         try {
-          const response = await fetch(`/api/post/${params.id}`);
+          const response = await fetch(`/api/post?id=${params.id}`);
           const data = await response.json();
           if (response.ok) {
             setFormData({
