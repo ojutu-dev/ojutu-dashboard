@@ -1,7 +1,7 @@
 import connectToMongoDB from '../../../../libs/mongodb';
 import Author from '../../../../model/author';
 import Post from '../../../../model/post';
-import cors from '../../../libs/cors';
+import cors from '../../../../libs/cors';
 
 const models = {
   author: Author,

@@ -1,7 +1,7 @@
 import connectToMongoDB from '../../libs/mongodb';
 import User from '../../model/user';
 import bcrypt from 'bcryptjs';
-import cors from '../../../libs/cors';
+import cors from '../../libs/cors';
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
