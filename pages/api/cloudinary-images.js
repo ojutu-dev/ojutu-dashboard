@@ -1,6 +1,5 @@
 
 import { v2 as cloudinary } from 'cloudinary';
-import cors from '../../../libs/cors';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

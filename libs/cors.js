@@ -1,5 +1,5 @@
 import Cors from 'cors';
-import initMiddleware from './innit-middleware';
+import initMiddleware from './init-middleware';
 
 const allowedOrigins = [
   'http://168.231.66.225:3010',
