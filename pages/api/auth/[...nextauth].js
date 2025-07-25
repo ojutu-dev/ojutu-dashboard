@@ -16,7 +16,7 @@ export default NextAuth({
       },
       async authorize(credentials) {
         await connectToMongoDB(process.env.MONGODB_URI);
-        await cors(req, res);
+        // await cors(req, res);
         
 
         const user = await User.findOne({ username: credentials.username });
