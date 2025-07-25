@@ -8,11 +8,9 @@ import { v2 as cloudinary } from 'cloudinary';
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '100mb',
+      sizeLimit: '100mb', 
     },
   },
-  
-  maxDuration: 10,
 };
 
 cloudinary.config({
@@ -24,27 +22,46 @@ cloudinary.config({
 export default async function handler(req, res) {
   await connectToMongoDB(process.env.MONGODB_URI);
 
+  const { id, slug} = req.query;
   if (req.method === 'GET') {
     try {
-      const portfolios = await Portfolio.find().populate('brand').populate('service').populate('keywords');
-       // Map over the portfolios and extract only the needed fields
-       const response = portfolios.map(portfolio => ({
-        _id: portfolio._id,     
-        title: portfolio.title,
-        mainImage: portfolio.mainImage
-      }));
-      res.status(200).json({ 
-        success: true,
-        data: response 
-      
-      });
+      let portfolio; 
+      if (slug) {
+        portfolio = await Portfolio.findOne({ slug })
+          .populate('service', 'title')
+          .populate('brand', 'title')
+          .populate('keywords', 'title');
+      } else if (id) {
+        portfolio = await Portfolio.findById(id)
+          .populate('service', 'name')
+          .populate('brand', 'name')
+          .populate('keywords', 'name');
+      } else {
+        portfolio = await Portfolio.find()
+          .populate('brand')
+          .populate('service')
+          .populate('keywords')
+          .select('_id title ogdescription mainImage slug');
+
+        return res.status(200).json({
+          success: true,
+          count: portfolio.length,
+          data: portfolio,
+        });
+      }
+
+      if (!portfolio) {
+        return res.status(404).json({ message: 'Portfolio not found' });
+      }
+
+      res.status(200).json(portfolio);
     } catch (error) {
       console.error('Error fetching portfolios:', error);
-      res.status(500).json({ message: 'Error fetching portfolios', error });
+      res.status(500).json({ message: 'Error fetching portfolios', error: error.message });
     }
-  } else if (req.method === 'POST') {
+  }  else if (req.method === 'POST') {
     const { title, company, slug, address, ogdescription, body, serviceId, brandId, keywords, mainImage, headerImage, otherImage, ogImage } = req.body;
-    
+
     try {
       const brand = await Brand.findById(brandId);
       const keywordsData = await Keywords.find({ _id: { $in: keywords } });
@@ -60,17 +77,7 @@ export default async function handler(req, res) {
         throw new Error('Invalid service ID');
       }
 
-      const convertToBase64 = (imageBuffer) => {
-        if (imageBuffer) {
-          const base64Image = Buffer.from(imageBuffer).toString('base64');
-          const mimeType = 'image/jpeg'; // You can adjust the mime type based on the actual image type
-          return `data:${mimeType};base64,${base64Image}`;
-        }
-        return null;
-      };
-
-      const uploadBase64Image = async (imageBuffer) => {
-        const base64Image = convertToBase64(imageBuffer);
+      const uploadBase64Image = async (base64Image) => {
         if (base64Image) {
           const uploadResult = await cloudinary.uploader.upload(base64Image, { folder: 'ojutu' });
           return uploadResult.secure_url;
@@ -107,7 +114,63 @@ export default async function handler(req, res) {
       console.error('Error creating portfolio:', error);
       res.status(500).json({ message: 'Error creating portfolio', error: error.message });
     }
-  } else {
+  }else if (req.method === 'PUT') {
+    try {
+      const { title, company, slug, serviceId, address, brandId, mainImage, headerImage, otherImage, ogImage, ogdescription, keywords, body } = req.body;
+
+      const uploadImage = async (image) => {
+        if (image && image.startsWith('data:image')) {
+          const uploadResult = await cloudinary.uploader.upload(image, { folder: 'portfolio' });
+          return uploadResult.secure_url;
+        }
+        return image;
+      };
+
+      const [mainImageUrl, headerImageUrl, otherImageUrl, ogImageUrl] = await Promise.all([
+        uploadImage(mainImage),
+        uploadImage(headerImage),
+        uploadImage(otherImage),
+        uploadImage(ogImage),
+      ]);
+
+      const updatedPortfolio = await Portfolio.findByIdAndUpdate(
+        id,
+        {
+          title,
+          company,
+          slug,
+          service: serviceId,
+          address,
+          brand: brandId,
+          mainImage: mainImageUrl,
+          headerImage: headerImageUrl,
+          otherImage: otherImageUrl,
+          ogImage: ogImageUrl,
+          ogdescription,
+          keywords,
+          body,
+        },
+        { new: true, runValidators: true }
+      );
+
+      if (!updatedPortfolio) {
+        return res.status(404).json({ message: 'Portfolio not found' });
+      }
+      res.status(200).json(updatedPortfolio);
+    } catch (error) {
+      res.status(500).json({ message: 'Error updating portfolio', error: error.message });
+    }
+  } else if (req.method === 'DELETE') {
+    try {
+      const deletedPortfolio = await Portfolio.findByIdAndDelete(id);
+      if (!deletedPortfolio) {
+        return res.status(404).json({ message: 'Portfolio not found' });
+      }
+      res.status(200).json({ message: 'Portfolio deleted' });
+    } catch (error) {
+      res.status(500).json({ message: 'Error deleting portfolio', error: error.message });
+    }
+  }  else {
     res.status(405).json({ message: 'Method not allowed' });
-  }
+  } 
 }

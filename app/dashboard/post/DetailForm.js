@@ -1,15 +1,16 @@
 "use client";
 
 import { useRouter, usePathname, useParams } from "next/navigation";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { useContent } from "../../../context/ContentContext";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import Image from "next/image";
-import ImageSelectionModal from '../../../components/ImageSelectionModal';
+import ImageSelectionModal from "../../../components/ImageSelectionModal";
+import "react-quill/dist/quill.snow.css"; // Import Quill styles
 
-// Dynamically import JoditEditor to prevent issues with SSR
-const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
+// Dynamically import ReactQuill to prevent issues with SSR
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
 export default function DetailForm() {
   const router = useRouter();
@@ -35,14 +36,13 @@ export default function DetailForm() {
   const [ogImagePreview, setOgImagePreview] = useState(null);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [authorOptions, setAuthorOptions] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false); // Confirmation modal state
-  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState({ // Image selection modal state
+  const [isModalOpen, setIsModalOpen] = useState(false); 
+  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState({
     header: false,
     featured: false,
     og: false,
   });
   const [loading, setLoading] = useState(false);
-  const editor = useRef(null);
 
   useEffect(() => {
     if (pathname) {
@@ -54,14 +54,13 @@ export default function DetailForm() {
 
   useEffect(() => {
     if (params.id && section) {
-      // Fetch the existing post data when in editing mode
+     
       const fetchPostData = async () => {
         try {
-          const response = await fetch(`/api/post/${params.id}`);
+          const response = await fetch(`/api/post?id=${params.id}`);
           const data = await response.json();
           if (response.ok) {
             setFormData({
-              // ...data,
               id: data._id,
               title: data.title,
               slug: data.slug,
@@ -73,7 +72,7 @@ export default function DetailForm() {
               authorId: data.author._id,
               body: Array.isArray(data.body)
                 ? data.body.join("")
-                : data.body || "", // Convert body to string
+                : data.body || "",
             });
             setHeaderImagePreview(data.headerImage);
             setFeaturedImagePreview(data.featuredImage);
@@ -151,9 +150,11 @@ export default function DetailForm() {
       ...prevFormData,
       [type]: imageUrl,
     }));
+
     if (type === "headerImage") setHeaderImagePreview(imageUrl);
     if (type === "featuredImage") setFeaturedImagePreview(imageUrl);
     if (type === "ogImage") setOgImagePreview(imageUrl);
+
     setIsImageSelectionModalOpen((prevState) => ({
       ...prevState,
       [type]: false,
@@ -163,14 +164,20 @@ export default function DetailForm() {
   const handleSlugGeneration = () => {
     setFormData((prevFormData) => ({
       ...prevFormData,
-      slug: prevFormData.title.toLowerCase().replace(/\s+/g, "-"),
+      slug: prevFormData.title
+        .toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/[^\w\-]+/g, "")
+        .replace(/\-\-+/g, "-")
+        .replace(/^-+/, "")
+        .replace(/-+$/, ""),
     }));
   };
 
   const handleBodyChange = (value) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
-      body: value || "", // Ensure body is always a string
+      body: value || "",
     }));
   };
 
@@ -186,7 +193,12 @@ export default function DetailForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          headerImage: formData.headerImage, 
+          featuredImage: formData.featuredImage,
+          ogImage: formData.ogImage,
+        }),
       });
 
       if (!response.ok) {
@@ -214,7 +226,7 @@ export default function DetailForm() {
   };
 
   const handleDelete = () => {
-    setIsModalOpen(true); // Open the modal
+    setIsModalOpen(true);
   };
 
   const confirmDelete = async () => {
@@ -231,48 +243,23 @@ export default function DetailForm() {
     } catch (error) {
       console.error("Error deleting post:", error);
     } finally {
-      setIsModalOpen(false); // Close the modal
+      setIsModalOpen(false);
     }
   };
 
   const closeModal = () => {
-    setIsModalOpen(false); // Close the modal
+    setIsModalOpen(false);
   };
 
-  const config = useMemo(
+  const quillModules = useMemo(
     () => ({
-      toolbarAdaptive: false,
-      buttons: "paragraph,|,bold,italic,ul,paste,selectall,file,image",
-      uploader: {
-        insertImageAsBase64URI: true,
-        imagesExtensions: ["jpg", "png", "jpeg", "gif"],
-        url: "/api/upload",
-        format: "json",
-        method: "POST",
-        headers: {
-          Authorization: "Bearer your-access-token",
-        },
-        filesVariableName: function (t) {
-          return "files[" + t + "]";
-        },
-        process: function (resp) {
-          return {
-            files: resp.files.map(function (file) {
-              return {
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                url: file.url,
-                thumb: file.url,
-                error: file.error,
-              };
-            }),
-            path: resp.path,
-            baseurl: resp.baseurl,
-          };
-        },
-      },
-      placeholder: "Start typing...",
+      toolbar: [
+        [{ header: "1" }, { header: "2" }, { font: [] }],
+        [{ list: "ordered" }, { list: "bullet" }],
+        ["bold", "italic", "underline", "strike"],
+        ["link", "image"],
+        [{ align: [] }],
+      ],
     }),
     []
   );
@@ -299,9 +286,7 @@ export default function DetailForm() {
         </label>
       </div>
       <div className="mt-4">
-        <label className="w-full">
-          Slug:
-        </label>
+        <label className="w-full">Slug:</label>
 
         <div className="flex items-center">
           <input
@@ -457,18 +442,15 @@ export default function DetailForm() {
         </label>
       </div>
       <div className="mt-4">
-        <label>
-          Body:
-          <JoditEditor
-            ref={editor}
-            value={formData.body}
-            onChange={handleBodyChange}
-            config={config}
-            className="bg-white"
-          />
-        </label>
+        <label>Body:</label>
+        <ReactQuill
+          value={formData.body}
+          onChange={handleBodyChange}
+          modules={quillModules}
+          className="bg-white h-64"
+        />
       </div>
-      <div className="flex space-x-2 mt-4">
+      <div className="flex space-x-2 mt-20">
         <button
           type="submit"
           className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
@@ -526,7 +508,9 @@ export default function DetailForm() {
       <ImageSelectionModal
         isOpen={isImageSelectionModalOpen.featured}
         onClose={() => setIsImageSelectionModalOpen({ featured: false })}
-        onSelectImage={(imageUrl) => handleImageSelect(imageUrl, "featuredImage")}
+        onSelectImage={(imageUrl) =>
+          handleImageSelect(imageUrl, "featuredImage")
+        }
       />
       <ImageSelectionModal
         isOpen={isImageSelectionModalOpen.og}

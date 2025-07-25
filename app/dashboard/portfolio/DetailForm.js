@@ -1,18 +1,24 @@
 import { useRouter, usePathname, useParams } from "next/navigation";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useContent } from "../../../context/ContentContext";
 import dynamic from "next/dynamic";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import Image from "next/image";
 import ImageSelectionModal from "../../../components/ImageSelectionModal";
+import "react-quill/dist/quill.snow.css";
 
-const JoditEditor = dynamic(() => import("jodit-react"), { ssr: false });
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
 export default function DetailForm() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
-  const { content, addItem, updateItem, deleteItem } = useContent();
+  const { addItem, updateItem, deleteItem } = useContent();
+
+  const section = pathname
+    ? pathname.split("/")[pathname.split("/").length - 2]
+    : "";
+
   const [formData, setFormData] = useState({
     id: Date.now(),
     title: "",
@@ -28,47 +34,50 @@ export default function DetailForm() {
     keywords: [],
     body: "",
   });
-  const [section, setSection] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
+
   const [mainImagePreview, setMainImagePreview] = useState(null);
   const [headerImagePreview, setHeaderImagePreview] = useState(null);
   const [otherImagePreview, setOtherImagePreview] = useState(null);
   const [brandOptions, setBrandOptions] = useState([]);
   const [serviceOptions, setServiceOptions] = useState([]);
   const [keywordOptions, setKeywordOptions] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState(false);
+  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] =
+    useState(false);
   const [imageField, setImageField] = useState(null);
   const [loading, setLoading] = useState(false);
-  const editor = useRef(null);
 
   useEffect(() => {
-    if (pathname) {
-      const pathParts = pathname.split("/");
-      const sectionName = pathParts[pathParts.length - 2];
-      setSection(sectionName);
-    }
-  }, [pathname]);
-
-  useEffect(() => {
-    if (params.id && section) {
+    if (params.id) {
       const fetchItem = async () => {
         try {
           const response = await fetch(`/api/portfolio/${params.id}`);
           const item = await response.json();
+
           if (response.ok) {
-            setFormData({
-              ...item,
+            setFormData((prevFormData) => ({
+              ...prevFormData,
+              title: item.title || "",
+              company: item.company || "",
+              slug: item.slug || "",
               brandId: item.brand?._id || "",
               serviceId: item.service?._id || "",
               keywords: item.keywords?.map((k) => k._id) || [],
+              address: item.address || "",
+              ogdescription: item.ogdescription || "",
               body: Array.isArray(item.body)
                 ? item.body.join("")
-                : item.body || "", // Ensure body is a string
-            });
+                : item.body || "",
+              mainImage: item.mainImage || null,
+              headerImage: item.headerImage || null,
+              otherImage: item.otherImage || null,
+            }));
+
             setMainImagePreview(item.mainImage);
             setHeaderImagePreview(item.headerImage);
             setOtherImagePreview(item.otherImage);
+
             setIsEditing(true);
           } else {
             console.error("Failed to fetch item:", item);
@@ -77,21 +86,17 @@ export default function DetailForm() {
           console.error("Error fetching item:", error);
         }
       };
+
       fetchItem();
     }
-  }, [params.id, section]);
+  }, [params.id]);
 
   useEffect(() => {
-
     const fetchBrandOptions = async () => {
       try {
         const response = await fetch("/api/brand");
         const data = await response.json();
-        if (data.success !== false) {
-          setBrandOptions(data.data || data);
-        } else {
-          console.error("Failed to fetch brands");
-        }
+        setBrandOptions(data.data || data);
       } catch (error) {
         console.error("Error fetching brands:", error);
       }
@@ -101,11 +106,7 @@ export default function DetailForm() {
       try {
         const response = await fetch("/api/service");
         const data = await response.json();
-        if (data.success !== false) {
-          setServiceOptions(data.data || data);
-        } else {
-          console.error("Failed to fetch services");
-        }
+        setServiceOptions(data.data || data);
       } catch (error) {
         console.error("Error fetching services:", error);
       }
@@ -115,11 +116,7 @@ export default function DetailForm() {
       try {
         const response = await fetch("/api/keywords");
         const data = await response.json();
-        if (data.success !== false) {
-          setKeywordOptions(data.data || data);
-        } else {
-          console.error("Failed to fetch keywords");
-        }
+        setKeywordOptions(data.data || data);
       } catch (error) {
         console.error("Error fetching keywords:", error);
       }
@@ -145,13 +142,11 @@ export default function DetailForm() {
         if (name === "otherImage") setOtherImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
-    } else if (name === "keywords") {
-      const newKeywords = formData.keywords.includes(value)
-        ? formData.keywords.filter((keyword) => keyword !== value)
-        : [...formData.keywords, value];
-      setFormData({ ...formData, keywords: newKeywords });
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        [name]: value,
+      }));
     }
   };
 
@@ -169,22 +164,23 @@ export default function DetailForm() {
   };
 
   const handleSlugGeneration = () => {
-    setFormData({
-      ...formData,
-      slug: formData.title.toLowerCase().replace(/\s+/g, "-"),
-    });
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      slug: prevFormData.title.toLowerCase().replace(/\s+/g, "-"),
+    }));
   };
 
   const handleBodyChange = (value) => {
-    setFormData({ ...formData, body: value });
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      body: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-
-    // Basic validation before submission
     if (
       !formData.title ||
       !formData.company ||
@@ -209,7 +205,6 @@ export default function DetailForm() {
         },
         body: JSON.stringify(formData),
       });
-
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -255,12 +250,8 @@ export default function DetailForm() {
     } catch (error) {
       console.error("Error deleting post:", error);
     } finally {
-      setIsModalOpen(false); // Close the modal
+      setIsModalOpen(false);
     }
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
   };
 
   const openImageSelectionModal = (field) => {
@@ -268,44 +259,18 @@ export default function DetailForm() {
     setIsImageSelectionModalOpen(true);
   };
 
-  const closeImageSelectionModal = () => {
-    setIsImageSelectionModalOpen(false);
-  };
+  const closeModal = () => setIsModalOpen(false);
+  const closeImageSelectionModal = () => setIsImageSelectionModalOpen(false);
 
-  const config = useMemo(
+  const modules = useMemo(
     () => ({
-      toolbarAdaptive: false,
-      buttons: "paragraph,|,bold,italic,ul,paste,selectall,file,image",
-      uploader: {
-        insertImageAsBase64URI: true,
-        imagesExtensions: ["jpg", "png", "jpeg", "gif"],
-        url: "/api/upload",
-        format: "json",
-        method: "POST",
-        headers: {
-          Authorization: "Bearer your-access-token",
-        },
-        filesVariableName: function (t) {
-          return "files[" + t + "]";
-        },
-        process: function (resp) {
-          return {
-            files: resp.files.map(function (file) {
-              return {
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                url: file.url,
-                thumb: file.url,
-                error: file.error,
-              };
-            }),
-            path: resp.path,
-            baseurl: resp.baseurl,
-          };
-        },
-      },
-      placeholder: "Start typing...",
+      toolbar: [
+        [{ header: "1" }, { header: "2" }, { font: [] }],
+        [{ list: "ordered" }, { list: "bullet" }],
+        ["bold", "italic", "underline", "strike"],
+        ["link", "image"],
+        [{ align: [] }],
+      ],
     }),
     []
   );
@@ -318,6 +283,7 @@ export default function DetailForm() {
           <div className="text-lg font-bold">{formData.title}</div>
         )}
       </div>
+
       <div>
         <label>
           Title:
@@ -331,6 +297,7 @@ export default function DetailForm() {
           />
         </label>
       </div>
+
       <div className="mt-4">
         <label>
           Company:
@@ -344,6 +311,7 @@ export default function DetailForm() {
           />
         </label>
       </div>
+
       <div className="mt-4">
         <label className="w-full">Slug:</label>
         <div className="flex items-center">
@@ -364,6 +332,7 @@ export default function DetailForm() {
           </button>
         </div>
       </div>
+
       <div className="mt-4">
         <label>
           Brand:
@@ -383,6 +352,7 @@ export default function DetailForm() {
           </select>
         </label>
       </div>
+
       <div className="mt-4">
         <label>
           Service:
@@ -402,6 +372,7 @@ export default function DetailForm() {
           </select>
         </label>
       </div>
+
       <div className="mt-4">
         <label>
           Keywords:
@@ -420,6 +391,7 @@ export default function DetailForm() {
           ))}
         </label>
       </div>
+
       <div className="mt-4">
         <label>
           Main Image:
@@ -448,6 +420,7 @@ export default function DetailForm() {
           </button>
         </label>
       </div>
+
       <div className="mt-4">
         <label>
           Header Image:
@@ -476,6 +449,7 @@ export default function DetailForm() {
           </button>
         </label>
       </div>
+
       <div className="mt-4">
         <label>
           Other Image:
@@ -504,19 +478,24 @@ export default function DetailForm() {
           </button>
         </label>
       </div>
+
       <div className="mt-4">
         <label>
-          Address:
-          <input
-            type="text"
+          Project Class:
+          <select
             name="address"
             value={formData.address}
             onChange={handleChange}
             required
             className="p-2 border rounded w-full outline-none text-black"
-          />
+          >
+            <option value="">Select Project Class</option>
+            <option value="New Website">New Website</option>
+            <option value="Redesign Project">Redesign Project</option>
+          </select>
         </label>
       </div>
+
       <div className="mt-4">
         <label>
           Description:
@@ -529,19 +508,18 @@ export default function DetailForm() {
           />
         </label>
       </div>
+
       <div className="mt-4">
-        <label>
-          Body:
-          <JoditEditor
-            ref={editor}
-            value={formData.body}
-            onChange={handleBodyChange}
-            config={config}
-            className="bg-white"
-          />
-        </label>
+        <label>Body:</label>
+        <ReactQuill
+          value={formData.body}
+          onChange={handleBodyChange}
+          modules={modules}
+          className="bg-white h-64"
+        />
       </div>
-      <div className="mt-4 flex gap-3">
+
+      <div className="mt-20 flex gap-3">
         <button
           type="submit"
           className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded"
@@ -586,6 +564,7 @@ export default function DetailForm() {
           </button>
         )}
       </div>
+
       <ConfirmationModal
         isOpen={isModalOpen}
         onClose={closeModal}

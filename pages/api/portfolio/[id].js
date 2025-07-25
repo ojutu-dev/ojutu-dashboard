@@ -1,5 +1,8 @@
 import connectToMongoDB from '../../../libs/mongodb';
 import Portfolio from '../../../model/portfolio';
+import Brand from '../../../model/brand';
+import Keywords from '../../../model/keywords';
+import Service from '../../../model/service';
 import { v2 as cloudinary } from 'cloudinary';
 
 export const config = {
