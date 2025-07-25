@@ -1,6 +1,7 @@
 import connectToMongoDB from '../../libs/mongodb';
 import User from '../../model/user';
 import bcrypt from 'bcryptjs';
+import cors from '../../libs/cors';
 
 export default async function handler(req, res) {
   if (req.method === 'POST') {
@@ -8,6 +9,8 @@ export default async function handler(req, res) {
       const { username, email, password } = req.body;
 
       await connectToMongoDB(process.env.MONGODB_URI);
+      await cors(req, res);
+      
 
       const existingUser = await User.findOne({ $or: [{ email }, { username }] });
       if (existingUser) {

@@ -3,9 +3,11 @@ import Post from '../../../model/post';
 import Author from '../../../model/author';
 import Category from '../../../model/category';
 import cloudinary from '../../../libs/cloudinary';
+import cors from '../../../libs/cors';
 
 export default async function handler(req, res) {
   await connectToMongoDB(process.env.MONGODB_URI);
+  await cors(req, res);
 
   const { id, slug } = req.query;
 

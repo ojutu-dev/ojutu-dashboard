@@ -4,6 +4,7 @@ import Brand from '../../../model/brand';
 import Keywords from '../../../model/keywords';
 import Service from '../../../model/service';
 import { v2 as cloudinary } from 'cloudinary';
+import cors from '../../../libs/cors';
 
 export const config = {
   api: {
@@ -21,6 +22,7 @@ cloudinary.config({
 
 export default async function handler(req, res) {
   await connectToMongoDB(process.env.MONGODB_URI);
+  await cors(req, res);
 
   const { id, slug} = req.query;
   if (req.method === 'GET') {

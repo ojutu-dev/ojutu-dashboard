@@ -4,6 +4,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import connectToMongoDB from '../../../libs/mongodb';
 import User from '../../../model/user';
+import cors from '../../../libs/cors';
 
 export default NextAuth({
   providers: [
@@ -15,6 +16,8 @@ export default NextAuth({
       },
       async authorize(credentials) {
         await connectToMongoDB(process.env.MONGODB_URI);
+        await cors(req, res);
+        
 
         const user = await User.findOne({ username: credentials.username });
         if (!user) {
