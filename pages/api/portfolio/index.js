@@ -8,6 +8,7 @@ import Service from '../../../model/service';
 import { parseForm } from '../../../libs/parseForm';
 import { uploadBuffer } from '../../../libs/uploadBuffer';
 import cors from '../../../libs/cors';
+import cloudinary from '../../../libs/cloudinary';
 
 export const config = {
   api: {

@@ -7,9 +7,8 @@ import { useContent } from "../../../context/ContentContext";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import Image from "next/image";
 import ImageSelectionModal from "../../../components/ImageSelectionModal";
-import "react-quill/dist/quill.snow.css"; // Import Quill styles
+import "react-quill/dist/quill.snow.css";
 
-// Dynamically import ReactQuill to prevent issues with SSR
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
 export default function DetailForm() {
@@ -17,26 +16,37 @@ export default function DetailForm() {
   const pathname = usePathname();
   const params = useParams();
   const { content, addItem, updateItem, deleteItem } = useContent();
+
+  // Form state
   const [formData, setFormData] = useState({
-    id: Date.now(),
     title: "",
     slug: "",
-    headerImage: null,
-    featuredImage: null,
-    ogImage: null,
     description: "",
     categoryId: "",
     authorId: "",
     body: "",
   });
+
+  // File state
+  const [files, setFiles] = useState({
+    headerImage: null,
+    featuredImage: null,
+    ogImage: null,
+  });
+
+  // Image previews
+  const [previews, setPreviews] = useState({
+    headerImage: null,
+    featuredImage: null,
+    ogImage: null,
+  });
+
+  // Other state variables
   const [section, setSection] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [headerImagePreview, setHeaderImagePreview] = useState(null);
-  const [featuredImagePreview, setFeaturedImagePreview] = useState(null);
-  const [ogImagePreview, setOgImagePreview] = useState(null);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [authorOptions, setAuthorOptions] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false); 
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState({
     header: false,
     featured: false,
@@ -44,6 +54,7 @@ export default function DetailForm() {
   });
   const [loading, setLoading] = useState(false);
 
+  // Set section from URL
   useEffect(() => {
     if (pathname) {
       const pathParts = pathname.split("/");
@@ -52,34 +63,33 @@ export default function DetailForm() {
     }
   }, [pathname]);
 
+  // Fetch post data if editing
   useEffect(() => {
     if (params.id && section) {
-     
       const fetchPostData = async () => {
         try {
           const response = await fetch(`/api/post?id=${params.id}`);
           const data = await response.json();
           if (response.ok) {
             setFormData({
-              id: data._id,
               title: data.title,
               slug: data.slug,
-              headerImage: data.headerImage,
-              featuredImage: data.featuredImage,
-              ogImage: data.ogImage,
               description: data.description,
-              categoryId: data.category._id,
-              authorId: data.author._id,
+              categoryId: data.category?._id || "",
+              authorId: data.author?._id || "",
               body: Array.isArray(data.body)
                 ? data.body.join("")
                 : data.body || "",
             });
-            setHeaderImagePreview(data.headerImage);
-            setFeaturedImagePreview(data.featuredImage);
-            setOgImagePreview(data.ogImage);
+
+            // Set existing image URLs as previews
+            setPreviews({
+              headerImage: data.headerImage || null,
+              featuredImage: data.featuredImage || null,
+              ogImage: data.ogImage || null,
+            });
+
             setIsEditing(true);
-          } else {
-            console.error("Failed to fetch post data:", data);
           }
         } catch (error) {
           console.error("Error fetching post data:", error);
@@ -89,82 +99,66 @@ export default function DetailForm() {
     }
   }, [params.id, section]);
 
+  // Fetch category and author options
   useEffect(() => {
-    const fetchCategoryOptions = async () => {
+    const fetchOptions = async () => {
       try {
-        const response = await fetch("/api/category");
-        const data = await response.json();
-        if (data.length > 0) {
-          setCategoryOptions(data);
-        } else {
-          console.error("Failed to fetch categories");
+        // Fetch categories
+        const categoriesResponse = await fetch("/api/category");
+        const categoriesData = await categoriesResponse.json();
+        if (categoriesData.length > 0) {
+          setCategoryOptions(categoriesData);
+        }
+
+        // Fetch authors
+        const authorsResponse = await fetch("/api/author");
+        const authorsData = await authorsResponse.json();
+        if (authorsData.success) {
+          setAuthorOptions(authorsData.data);
         }
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        console.error("Error fetching options:", error);
       }
     };
 
-    const fetchAuthorOptions = async () => {
-      try {
-        const response = await fetch("/api/author");
-        const data = await response.json();
-        if (data.success) {
-          setAuthorOptions(data.data);
-        } else {
-          console.error("Failed to fetch authors");
-        }
-      } catch (error) {
-        console.error("Error fetching authors:", error);
-      }
-    };
-
-    fetchCategoryOptions();
-    fetchAuthorOptions();
+    fetchOptions();
   }, []);
 
+  // Handle form field changes
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (files && files.length > 0) {
-      const file = files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          [name]: reader.result,
-        }));
-        if (name === "headerImage") setHeaderImagePreview(reader.result);
-        if (name === "featuredImage") setFeaturedImagePreview(reader.result);
-        if (name === "ogImage") setOgImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+    const { name, value, files: inputFiles } = e.target;
+
+    if (inputFiles && inputFiles.length > 0) {
+      const file = inputFiles[0];
+      setFiles((prev) => ({ ...prev, [name]: file }));
+
+      // Create preview URL and clean up previous one
+      if (previews[name]) {
+        URL.revokeObjectURL(previews[name]);
+      }
+      const previewUrl = URL.createObjectURL(file);
+      setPreviews((prev) => ({ ...prev, [name]: previewUrl }));
     } else {
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        [name]: value,
-      }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
+  // Handle image selection from cloud
   const handleImageSelect = (imageUrl, type) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [type]: imageUrl,
-    }));
+    setPreviews((prev) => ({ ...prev, [type]: imageUrl }));
+    setFiles((prev) => ({ ...prev, [type]: null })); // Clear file if URL is selected
 
-    if (type === "headerImage") setHeaderImagePreview(imageUrl);
-    if (type === "featuredImage") setFeaturedImagePreview(imageUrl);
-    if (type === "ogImage") setOgImagePreview(imageUrl);
-
-    setIsImageSelectionModalOpen((prevState) => ({
-      ...prevState,
-      [type]: false,
+    setIsImageSelectionModalOpen((prev) => ({
+      ...prev,
+      [type.replace("Image", "")]: false,
     }));
   };
 
+  // Generate slug from title
   const handleSlugGeneration = () => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      slug: prevFormData.title
+    setFormData((prev) => ({
+      ...prev,
+      slug: prev.title
         .toLowerCase()
         .replace(/\s+/g, "-")
         .replace(/[^\w\-]+/g, "")
@@ -174,83 +168,97 @@ export default function DetailForm() {
     }));
   };
 
+  // Handle rich text editor changes
   const handleBodyChange = (value) => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      body: value || "",
-    }));
+    setFormData((prev) => ({ ...prev, body: value || "" }));
   };
 
+  // Form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const method = isEditing ? "PUT" : "POST";
-    const url = isEditing ? `/api/post/${params.id}` : "/api/post";
     setLoading(true);
 
+    const formDataToSend = new FormData();
+
+    // Append text fields
+    Object.entries(formData).forEach(([key, value]) => {
+      formDataToSend.append(key, value);
+    });
+
+    // Append files if they exist
+    Object.entries(files).forEach(([key, file]) => {
+      if (file) {
+        formDataToSend.append(key, file);
+      } else if (previews[key] && !previews[key].startsWith("blob:")) {
+        // If we have a non-blob URL (existing image), send it as a string
+        formDataToSend.append(key, previews[key]);
+      }
+    });
+
     try {
+      const url = isEditing ? `/api/post/${params.id}` : "/api/post";
+      const method = isEditing ? "PUT" : "POST";
+
       const response = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          headerImage: formData.headerImage, 
-          featuredImage: formData.featuredImage,
-          ogImage: formData.ogImage,
-        }),
+        body: formDataToSend,
       });
 
       if (!response.ok) {
-        const errorResponse = await response.json();
-        console.error("Failed to save post:", errorResponse);
-        return;
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to save post");
       }
 
-      const post = await response.json();
+      const result = await response.json();
       if (isEditing) {
-        updateItem(section, post.id, post);
+        updateItem(section, result.data._id, result.data);
       } else {
-        addItem(section, post);
+        addItem(section, result.data);
       }
       router.push(`/dashboard/${section}`);
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("Submission error:", error);
+      alert(error.message || "An error occurred while saving the post");
     } finally {
       setLoading(false);
     }
   };
 
+  // Handle cancel action
   const handleCancel = () => {
     router.back();
   };
 
+  // Handle delete action
   const handleDelete = () => {
     setIsModalOpen(true);
   };
 
+  // Confirm delete
   const confirmDelete = async () => {
     try {
       const response = await fetch(`/api/post/${params.id}`, {
         method: "DELETE",
       });
-      if (response.ok) {
-        deleteItem(section, formData.id);
-        router.push(`/dashboard/${section}`);
-      } else {
-        console.error("Failed to delete post");
-      }
+
+      if (!response.ok) throw new Error("Failed to delete post");
+
+      deleteItem(section, params.id);
+      router.push(`/dashboard/${section}`);
     } catch (error) {
-      console.error("Error deleting post:", error);
+      console.error("Delete error:", error);
+      alert(error.message || "An error occurred while deleting the post");
     } finally {
       setIsModalOpen(false);
     }
   };
 
+  // Close modal
   const closeModal = () => {
     setIsModalOpen(false);
   };
 
+  // Quill editor configuration
   const quillModules = useMemo(
     () => ({
       toolbar: [
@@ -265,258 +273,247 @@ export default function DetailForm() {
   );
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="max-w-4xl mx-auto p-4">
       <div className="mb-8">
         <h2 className="text-2xl font-bold">Post:</h2>
         {formData.title && (
           <div className="text-lg font-bold">{formData.title}</div>
         )}
       </div>
-      <div>
-        <label>
-          Title:
+
+      <div className="grid grid-cols-1 gap-6">
+        {/* Title Field */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Title:
+          </label>
           <input
             type="text"
             name="title"
             value={formData.title}
             onChange={handleChange}
             required
-            className="p-2 border rounded w-full outline-none text-black"
+            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
           />
-        </label>
-      </div>
-      <div className="mt-4">
-        <label className="w-full">Slug:</label>
-
-        <div className="flex items-center">
-          <input
-            type="text"
-            name="slug"
-            value={formData.slug}
-            onChange={handleChange}
-            required
-            className="p-2 border rounded w-full outline-none text-black"
-          />
-
-          <button
-            type="button"
-            onClick={handleSlugGeneration}
-            className="ml-2 p-2 bg-blue-500 hover:bg-blue-600 text-white rounded w-3/12"
-          >
-            Generate Slug
-          </button>
         </div>
-      </div>
-      <div className="mt-4">
-        <label>
-          Header Image:
-          {headerImagePreview && (
-            <Image
-              width={30}
-              height={30}
-              src={headerImagePreview}
-              alt="Preview"
-              className="w-32 h-32 object-cover my-2"
+
+        {/* Slug Field */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Slug:
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              name="slug"
+              value={formData.slug}
+              onChange={handleChange}
+              required
+              className="flex-1 p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
             />
-          )}
-          <input
-            type="file"
-            name="headerImage"
-            onChange={handleChange}
-            className="p-2 border rounded w-full"
-            accept="image/*"
-          />
-          <button
-            type="button"
-            onClick={() => setIsImageSelectionModalOpen({ header: true })}
-            className="mt-2 bg-gray-500 hover:bg-gray-600 text-white p-2 rounded"
-          >
-            Select Image From Cloud
-          </button>
-        </label>
-      </div>
-      <div className="mt-4">
-        <label>
-          Featured Image:
-          {featuredImagePreview && (
-            <Image
-              width={30}
-              height={30}
-              src={featuredImagePreview}
-              alt="Preview"
-              className="w-32 h-32 object-cover my-2"
-            />
-          )}
-          <input
-            type="file"
-            name="featuredImage"
-            onChange={handleChange}
-            className="p-2 border rounded w-full"
-            accept="image/*"
-          />
-          <button
-            type="button"
-            onClick={() => setIsImageSelectionModalOpen({ featured: true })}
-            className="mt-2 bg-gray-500 hover:bg-gray-600 text-white p-2 rounded"
-          >
-            Select Image From Cloud
-          </button>
-        </label>
-      </div>
-      <div className="mt-4">
-        <label>
-          OG Image:
-          {ogImagePreview && (
-            <Image
-              width={30}
-              height={30}
-              src={ogImagePreview}
-              alt="Preview"
-              className="w-32 h-32 object-cover my-2"
-            />
-          )}
-          <input
-            type="file"
-            name="ogImage"
-            onChange={handleChange}
-            className="p-2 border rounded w-full"
-            accept="image/*"
-          />
-          <button
-            type="button"
-            onClick={() => setIsImageSelectionModalOpen({ og: true })}
-            className="mt-2 bg-gray-500 hover:bg-gray-600 text-white p-2 rounded"
-          >
-            Select Image From Cloud
-          </button>
-        </label>
-      </div>
-      <div className="mt-4">
-        <label>
-          Description:
+            <button
+              type="button"
+              onClick={handleSlugGeneration}
+              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md"
+            >
+              Generate
+            </button>
+          </div>
+        </div>
+
+        {/* Image Fields */}
+        {["headerImage", "featuredImage", "ogImage"].map((imageType) => (
+          <div key={imageType}>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {imageType
+                .replace(/([A-Z])/g, " $1")
+                .replace(/^./, (str) => str.toUpperCase())}
+              :
+            </label>
+            {previews[imageType] && (
+              <div className="mb-2">
+                <Image
+                  width={200}
+                  height={200}
+                  src={previews[imageType]}
+                  alt="Preview"
+                  className="w-32 h-32 object-cover rounded-md"
+                />
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="file"
+                name={imageType}
+                onChange={handleChange}
+                className="flex-1 p-2 border border-gray-300 rounded-md shadow-sm"
+                accept="image/*"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  setIsImageSelectionModalOpen((prev) => ({
+                    ...prev,
+                    [imageType.replace("Image", "")]: true,
+                  }))
+                }
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md"
+              >
+                Select from Cloud
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {/* Description Field */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Description:
+          </label>
           <textarea
             name="description"
             value={formData.description}
             onChange={handleChange}
             required
-            className="p-2 border rounded w-full outline-none text-black resize-none aspect-[6/1]"
+            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 h-24"
           />
-        </label>
-      </div>
-      <div className="mt-4">
-        <label>
-          Category:
-          <select
-            name="categoryId"
-            value={formData.categoryId}
-            onChange={handleChange}
-            required
-            className="p-2 border rounded w-full outline-none text-black"
-          >
-            <option value="">Select Category</option>
-            {categoryOptions.map((category) => (
-              <option key={category._id} value={category._id}>
-                {category.title}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div className="mt-4">
-        <label>
-          Author:
-          <select
-            name="authorId"
-            value={formData.authorId}
-            onChange={handleChange}
-            required
-            className="p-2 border rounded w-full outline-none text-black"
-          >
-            <option value="">Select Author</option>
-            {authorOptions.map((author) => (
-              <option key={author._id} value={author._id}>
-                {author.name}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div className="mt-4">
-        <label>Body:</label>
-        <ReactQuill
-          value={formData.body}
-          onChange={handleBodyChange}
-          modules={quillModules}
-          className="bg-white h-64"
-        />
-      </div>
-      <div className="flex space-x-2 mt-20">
-        <button
-          type="submit"
-          className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded"
-          disabled={loading}
-        >
-          {loading ? (
-            <svg
-              className="animate-spin h-6 w-6"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
+        </div>
+
+        {/* Category and Author Fields */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Category:
+            </label>
+            <select
+              name="categoryId"
+              value={formData.categoryId}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
             >
-              <circle
-                className="stroke-current text-white opacity-75"
-                cx="12"
-                cy="12"
-                r="10"
-                fill="none"
-                strokeWidth="4"
-              ></circle>
-            </svg>
-          ) : isEditing ? (
-            "Update"
-          ) : (
-            "Publish"
-          )}
-        </button>
-        <button
-          type="button"
-          onClick={handleCancel}
-          className="bg-gray-500 hover:bg-gray-600 text-white p-2 rounded"
-        >
-          Cancel
-        </button>
-        {isEditing && (
+              <option value="">Select Category</option>
+              {categoryOptions.map((category) => (
+                <option key={category._id} value={category._id}>
+                  {category.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Author:
+            </label>
+            <select
+              name="authorId"
+              value={formData.authorId}
+              onChange={handleChange}
+              required
+              className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">Select Author</option>
+              {authorOptions.map((author) => (
+                <option key={author._id} value={author._id}>
+                  {author.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Body Field */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Body:
+          </label>
+          <ReactQuill
+            value={formData.body}
+            onChange={handleBodyChange}
+            modules={quillModules}
+            className="bg-white rounded-md border border-gray-300"
+            style={{ height: "400px" }}
+          />
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex justify-end gap-3 pt-6">
           <button
             type="button"
-            onClick={handleDelete}
-            className="bg-red-500 hover:bg-red-600 text-white p-2 rounded"
+            onClick={handleCancel}
+            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md"
           >
-            Delete
+            Cancel
           </button>
-        )}
+          {isEditing && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md"
+            >
+              Delete
+            </button>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md disabled:opacity-50"
+          >
+            {loading ? (
+              <span className="flex items-center">
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                {isEditing ? "Updating..." : "Publishing..."}
+              </span>
+            ) : isEditing ? (
+              "Update"
+            ) : (
+              "Publish"
+            )}
+          </button>
+        </div>
       </div>
+
+      {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={isModalOpen}
         onClose={closeModal}
         onConfirm={confirmDelete}
+        title="Confirm Delete"
+        message="Are you sure you want to delete this post?"
       />
-      <ImageSelectionModal
-        isOpen={isImageSelectionModalOpen.header}
-        onClose={() => setIsImageSelectionModalOpen({ header: false })}
-        onSelectImage={(imageUrl) => handleImageSelect(imageUrl, "headerImage")}
-      />
-      <ImageSelectionModal
-        isOpen={isImageSelectionModalOpen.featured}
-        onClose={() => setIsImageSelectionModalOpen({ featured: false })}
-        onSelectImage={(imageUrl) =>
-          handleImageSelect(imageUrl, "featuredImage")
-        }
-      />
-      <ImageSelectionModal
-        isOpen={isImageSelectionModalOpen.og}
-        onClose={() => setIsImageSelectionModalOpen({ og: false })}
-        onSelectImage={(imageUrl) => handleImageSelect(imageUrl, "ogImage")}
-      />
+
+      {/* Image Selection Modals */}
+      {Object.entries(isImageSelectionModalOpen).map(([type, isOpen]) => (
+        <ImageSelectionModal
+          key={type}
+          isOpen={isOpen}
+          onClose={() =>
+            setIsImageSelectionModalOpen((prev) => ({ ...prev, [type]: false }))
+          }
+          onSelectImage={(imageUrl) =>
+            handleImageSelect(imageUrl, `${type}Image`)
+          }
+        />
+      ))}
     </form>
   );
 }
