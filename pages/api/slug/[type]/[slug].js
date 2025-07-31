@@ -1,6 +1,7 @@
 import connectToMongoDB from '../../../../libs/mongodb';
 import Author from '../../../../model/author';
 import Post from '../../../../model/post';
+import cors from '../../../../libs/cors';
 
 const models = {
   author: Author,
@@ -9,6 +10,7 @@ const models = {
 
 export default async function handler(req, res) {
   await connectToMongoDB(process.env.MONGODB_URI);
+  await cors(req, res);
 
   const { slug, type } = req.query;
   const Model = models[type];

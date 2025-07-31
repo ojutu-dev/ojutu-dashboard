@@ -1,8 +1,10 @@
 import connectToMongoDB from '../../../libs/mongodb';
 import Keywords from '../../../model/keywords';
+import cors from '../../../libs/cors';
 
 export default async function handler(req, res) {
   await connectToMongoDB(process.env.MONGODB_URI);
+  await cors(req, res);
 
   const { id } = req.query;
 
