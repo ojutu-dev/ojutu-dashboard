@@ -79,7 +79,7 @@ export default async function handler(req, res) {
         .populate('category', 'title')
         .select('_id title slug description featuredImage createdAt')
         .sort({ createdAt: -1 });
-        return res.status(200).json({ success: true, count: result.length, data: result });
+        return res.status(200).json({ success: true, count: posts.length, data: posts });
       }
 
       if (!post) return res.status(404).json({ message: 'Post not found' });
