@@ -1,6 +1,7 @@
 import connectToMongoDB from '../../../libs/mongodb';
 import Testimony from '../../../model/testimony';
 import { v2 as cloudinary } from 'cloudinary';
+import cors from '../../../libs/cors';
 
 
 cloudinary.config({
@@ -12,6 +13,7 @@ cloudinary.config({
 
 export default async function handler(req, res) {
   await connectToMongoDB(process.env.MONGODB_URI);
+  await cors(req, res);
 
   if (req.method === 'GET') {
     try {
