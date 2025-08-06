@@ -7,7 +7,7 @@ import { useContent } from "../../../context/ContentContext";
 import ConfirmationModal from "../../../components/ConfirmationModal";
 import Image from "next/image";
 import ImageSelectionModal from "../../../components/ImageSelectionModal";
-import 'react-quill/dist/quill.snow.css'; // Import Quill styles
+import "react-quill/dist/quill.snow.css"; // Import Quill styles
 
 // Dynamically import ReactQuill to prevent issues with SSR
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -36,8 +36,8 @@ export default function DetailForm() {
   const [ogImagePreview, setOgImagePreview] = useState(null);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [authorOptions, setAuthorOptions] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false); // Confirmation modal state
-  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState({ // Image selection modal state
+  const [isModalOpen, setIsModalOpen] = useState(false); 
+  const [isImageSelectionModalOpen, setIsImageSelectionModalOpen] = useState({
     header: false,
     featured: false,
     og: false,
@@ -57,7 +57,7 @@ export default function DetailForm() {
 
   useEffect(() => {
     if (params.id && section) {
-      // Fetch the existing post data when in editing mode
+     
       const fetchPostData = async () => {
         try {
           const response = await fetch(`/api/post/${params.id}`);
@@ -75,7 +75,7 @@ export default function DetailForm() {
               authorId: data.author._id,
               body: Array.isArray(data.body)
                 ? data.body.join("")
-                : data.body || "", // Convert body to string
+                : data.body || "",
             });
             setHeaderImagePreview(data.headerImage);
             setFeaturedImagePreview(data.featuredImage);
@@ -155,9 +155,11 @@ export default function DetailForm() {
       ...prevFormData,
       [type]: imageUrl,
     }));
+
     if (type === "headerImage") setHeaderImagePreview(imageUrl);
     if (type === "featuredImage") setFeaturedImagePreview(imageUrl);
     if (type === "ogImage") setOgImagePreview(imageUrl);
+
     setIsImageSelectionModalOpen((prevState) => ({
       ...prevState,
       [type]: false,
@@ -169,14 +171,13 @@ export default function DetailForm() {
       ...prevFormData,
       slug: prevFormData.title
         .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w\-]+/g, '')
-        .replace(/\-\-+/g, '-')
-        .replace(/^-+/, '')
-        .replace(/-+$/, '')
+        .replace(/\s+/g, "-")
+        .replace(/[^\w\-]+/g, "")
+        .replace(/\-\-+/g, "-")
+        .replace(/^-+/, "")
+        .replace(/-+$/, ""),
     }));
   };
-  
 
   const handleBodyChange = (value) => {
     setFormData((prevFormData) => ({
@@ -197,7 +198,12 @@ export default function DetailForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          headerImage: formData.headerImage, 
+          featuredImage: formData.featuredImage,
+          ogImage: formData.ogImage,
+        }),
       });
 
       if (!response.ok) {
@@ -252,7 +258,7 @@ export default function DetailForm() {
 
   const quillModules = useMemo(
     () => ({
-      toolbar:[
+      toolbar: [
         [{ header: "1" }, { header: "2" }, { font: [] }],
         [{ list: "ordered" }, { list: "bullet" }],
         ["bold", "italic", "underline", "strike"],
@@ -285,9 +291,7 @@ export default function DetailForm() {
         </label>
       </div>
       <div className="mt-4">
-        <label className="w-full">
-          Slug:
-        </label>
+        <label className="w-full">Slug:</label>
 
         <div className="flex items-center">
           <input
@@ -444,12 +448,12 @@ export default function DetailForm() {
       </div>
       <div className="mt-4">
         <label>Body:</label>
-          <ReactQuill
-            value={formData.body}
-            onChange={handleBodyChange}
-            modules={quillModules}
-            className="bg-white h-64"
-          />
+        <ReactQuill
+          value={formData.body}
+          onChange={handleBodyChange}
+          modules={quillModules}
+          className="bg-white h-64"
+        />
       </div>
       <div className="flex space-x-2 mt-20">
         <button
@@ -509,7 +513,9 @@ export default function DetailForm() {
       <ImageSelectionModal
         isOpen={isImageSelectionModalOpen.featured}
         onClose={() => setIsImageSelectionModalOpen({ featured: false })}
-        onSelectImage={(imageUrl) => handleImageSelect(imageUrl, "featuredImage")}
+        onSelectImage={(imageUrl) =>
+          handleImageSelect(imageUrl, "featuredImage")
+        }
       />
       <ImageSelectionModal
         isOpen={isImageSelectionModalOpen.og}

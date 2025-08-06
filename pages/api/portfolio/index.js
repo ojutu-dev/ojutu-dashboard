@@ -8,11 +8,9 @@ import { v2 as cloudinary } from 'cloudinary';
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '100mb',
+      sizeLimit: '100mb', // Ensure large images can be handled
     },
   },
-  
-  maxDuration: 10,
 };
 
 cloudinary.config({
@@ -27,17 +25,9 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       const portfolios = await Portfolio.find().populate('brand').populate('service').populate('keywords');
-
-      //  const response = portfolios.map(portfolio => ({
-      //   _id: portfolio._id,     
-      //   title: portfolio.title,
-      //   mainImage: portfolio.mainImage
-      // }));
-      
-      res.status(200).json({ 
+      res.status(200).json({
         success: true,
-        data: portfolios 
-      
+        data: portfolios,
       });
     } catch (error) {
       console.error('Error fetching portfolios:', error);
@@ -45,7 +35,7 @@ export default async function handler(req, res) {
     }
   } else if (req.method === 'POST') {
     const { title, company, slug, address, ogdescription, body, serviceId, brandId, keywords, mainImage, headerImage, otherImage, ogImage } = req.body;
-    
+
     try {
       const brand = await Brand.findById(brandId);
       const keywordsData = await Keywords.find({ _id: { $in: keywords } });
@@ -61,17 +51,8 @@ export default async function handler(req, res) {
         throw new Error('Invalid service ID');
       }
 
-      const convertToBase64 = (imageBuffer) => {
-        if (imageBuffer) {
-          const base64Image = Buffer.from(imageBuffer).toString('base64');
-          const mimeType = 'image/jpeg'; // You can adjust the mime type based on the actual image type
-          return `data:${mimeType};base64,${base64Image}`;
-        }
-        return null;
-      };
-
-      const uploadBase64Image = async (imageBuffer) => {
-        const base64Image = convertToBase64(imageBuffer);
+      // Upload the base64 images directly
+      const uploadBase64Image = async (base64Image) => {
         if (base64Image) {
           const uploadResult = await cloudinary.uploader.upload(base64Image, { folder: 'ojutu' });
           return uploadResult.secure_url;
