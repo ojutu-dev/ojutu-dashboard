@@ -70,6 +70,8 @@ export default function DetailForm() {
           const response = await fetch(`/api/portfolio/${params.id}`);
           const item = await response.json();
 
+          
+
           if (response.ok) {
             setFormData({
               title: item.title || "",
@@ -245,6 +247,7 @@ export default function DetailForm() {
       }
 
       const result = await response.json();
+     
       if (isEditing) {
         updateItem(section, result.data._id, result.data);
       } else {

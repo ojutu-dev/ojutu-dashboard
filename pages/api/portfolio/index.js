@@ -12,13 +12,7 @@ import cloudinary from '../../../libs/cloudinary';
 
 export const config = {
   api: {
-<<<<<<< HEAD
-    bodyParser: {
-      sizeLimit: '100mb', // Ensure large images can be handled
-    },
-=======
     bodyParser: false, // Required for file uploads
->>>>>>> a06620db754d5825e396e59c187dad68b395b16b
   },
 };
 
@@ -36,13 +30,6 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-<<<<<<< HEAD
-      const portfolios = await Portfolio.find().populate('brand').populate('service').populate('keywords');
-      res.status(200).json({
-        success: true,
-        data: portfolios,
-      });
-=======
       let portfolio;
 
       if (slug) {
@@ -74,19 +61,12 @@ export default async function handler(req, res) {
       }
 
       res.status(200).json(portfolio);
->>>>>>> a06620db754d5825e396e59c187dad68b395b16b
     } catch (error) {
       console.error('Error fetching portfolios:', error);
       res.status(500).json({ message: 'Error fetching portfolios', error: error.message });
     }
-<<<<<<< HEAD
-  } else if (req.method === 'POST') {
-    const { title, company, slug, address, ogdescription, body, serviceId, brandId, keywords, mainImage, headerImage, otherImage, ogImage } = req.body;
-
-=======
 
   } else if (req.method === 'POST' || req.method === 'PUT') {
->>>>>>> a06620db754d5825e396e59c187dad68b395b16b
     try {
       const { fields, files } = await parseForm(req);
 
@@ -105,16 +85,6 @@ export default async function handler(req, res) {
       if (!service) throw new Error('Invalid service ID');
       if (!keywordsData.length) throw new Error('Invalid keywords');
 
-<<<<<<< HEAD
-      // Upload the base64 images directly
-      const uploadBase64Image = async (base64Image) => {
-        if (base64Image) {
-          const uploadResult = await cloudinary.uploader.upload(base64Image, { folder: 'ojutu' });
-          return uploadResult.secure_url;
-        }
-        return null;
-      };
-=======
       const uploadOrKeepImage = async (imageFile, existingUrl) => {
         if (!imageFile) return existingUrl || null;
         return await uploadBuffer(imageFile.buffer, 'portfolio', imageFile.originalFilename);
@@ -124,7 +94,6 @@ export default async function handler(req, res) {
       const headerImageUrl = await uploadOrKeepImage(files.headerImage, fields.headerImage);
       const otherImageUrl = await uploadOrKeepImage(files.otherImage, fields.otherImage);
       const ogImageUrl = await uploadOrKeepImage(files.ogImage, fields.ogImage);
->>>>>>> a06620db754d5825e396e59c187dad68b395b16b
 
       const data = {
         title,

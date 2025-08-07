@@ -5,9 +5,6 @@ import connectToMongoDB from '../../../libs/mongodb';
 import Post from '../../../model/post';
 import Author from '../../../model/author';
 import Category from '../../../model/category';
-<<<<<<< HEAD
-import cloudinary from '../../../libs/cloudinary';
-=======
 import { parseForm } from '../../../libs/parseForm';
 import { uploadBuffer } from '../../../libs/uploadBuffer';
 import cloudinary from '../../../libs/cloudinary';
@@ -24,7 +21,6 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
->>>>>>> a06620db754d5825e396e59c187dad68b395b16b
 
 
 export default async function handler(req, res) {
@@ -34,12 +30,9 @@ export default async function handler(req, res) {
 
   if (req.method === 'POST') {
     try {
-<<<<<<< HEAD
-=======
       const { fields, files } = await parseForm(req);
       const { title, description, slug, body, authorId, categoryId } = fields;
 
->>>>>>> a06620db754d5825e396e59c187dad68b395b16b
       const author = await Author.findById(authorId);
       const category = await Category.findById(categoryId);
       if (!author || !category) return res.status(400).json({ message: 'Invalid author or category' });
@@ -150,8 +143,6 @@ export default async function handler(req, res) {
     res.status(405).json({ message: 'Method Not Allowed' });
   }
 }
-<<<<<<< HEAD
-=======
 
 
 
@@ -339,4 +330,3 @@ export default async function handler(req, res) {
 //     res.status(405).json({ message: 'Method not allowed' });
 //   }
 // }
->>>>>>> a06620db754d5825e396e59c187dad68b395b16b
