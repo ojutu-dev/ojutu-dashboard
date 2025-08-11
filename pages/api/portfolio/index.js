@@ -66,72 +66,81 @@ export default async function handler(req, res) {
       res.status(500).json({ message: 'Error fetching portfolios', error: error.message });
     }
 
-  } else if (req.method === 'POST' || req.method === 'PUT') {
-    try {
-      const { fields, files } = await parseForm(req);
-
-      const {
-        title, company, slug, address, ogdescription, body,
-        serviceId, brandId, keywords
-      } = fields;
-
-      const keywordArray = typeof keywords === 'string' ? keywords.split(',') : keywords;
-
-      const brand = await Brand.findById(brandId);
-      const service = await Service.findById(serviceId);
-      const keywordsData = await Keywords.find({ _id: { $in: keywordArray } });
-
-      if (!brand) throw new Error('Invalid brand ID');
-      if (!service) throw new Error('Invalid service ID');
-      if (!keywordsData.length) throw new Error('Invalid keywords');
-
-      const uploadOrKeepImage = async (imageFile, existingUrl) => {
-        if (!imageFile) return existingUrl || null;
-        return await uploadBuffer(imageFile.buffer, 'portfolio', imageFile.originalFilename);
-      };
-
-      const mainImageUrl = await uploadOrKeepImage(files.mainImage, fields.mainImage);
-      const headerImageUrl = await uploadOrKeepImage(files.headerImage, fields.headerImage);
-      const otherImageUrl = await uploadOrKeepImage(files.otherImage, fields.otherImage);
-      const ogImageUrl = await uploadOrKeepImage(files.ogImage, fields.ogImage);
-
-      const data = {
-        title,
-        company,
-        slug,
-        address,
-        ogdescription,
-        body,
-        service: serviceId,
-        brand: brandId,
-        keywords: keywordArray,
-        mainImage: mainImageUrl,
-        headerImage: headerImageUrl,
-        otherImage: otherImageUrl,
-        ogImage: ogImageUrl,
-      };
-
-      if (req.method === 'POST') {
-        const newPortfolio = new Portfolio(data);
-        await newPortfolio.save();
-        res.status(201).json({ success: true, data: newPortfolio });
-      } else {
-        const updatedPortfolio = await Portfolio.findByIdAndUpdate(id, data, {
-          new: true,
-          runValidators: true,
-        });
-
-        if (!updatedPortfolio) {
-          return res.status(404).json({ message: 'Portfolio not found' });
+  } 
+  else if (req.method === 'POST' || req.method === 'PUT') {
+      try {
+        const { fields, files } = await parseForm(req);
+  
+        const {
+          title,
+          company,
+          slug,
+          address,
+          ogdescription,
+          body,
+          serviceId,
+          brandId,
+          keywords,
+        } = fields;
+  
+        const keywordArray = typeof keywords === 'string' ? keywords.split(',') : keywords;
+  
+        // Validate refs
+        const brand = await Brand.findById(brandId);
+        if (!brand) throw new Error('Invalid brand ID');
+  
+        const service = await Service.findById(serviceId);
+        if (!service) throw new Error('Invalid service ID');
+  
+        const keywordsData = await Keywords.find({ _id: { $in: keywordArray } });
+        if (!keywordsData.length) throw new Error('Invalid keywords');
+  
+        // Upload or keep existing image
+        const uploadOrKeepImage = async (imageFile, existingUrl) => {
+          if (!imageFile) return existingUrl || null;
+          return await uploadBuffer(imageFile.buffer, 'portfolio', imageFile.originalFilename);
+        };
+  
+        const mainImageUrl = await uploadOrKeepImage(files.mainImage, fields.mainImage);
+        const headerImageUrl = await uploadOrKeepImage(files.headerImage, fields.headerImage);
+        const otherImageUrl = await uploadOrKeepImage(files.otherImage, fields.otherImage);
+        const ogImageUrl = await uploadOrKeepImage(files.ogImage, fields.ogImage);
+  
+        const data = {
+          title,
+          company,
+          slug,
+          address,
+          ogdescription,
+          body,
+          service: serviceId,
+          brand: brandId,
+          keywords: keywordArray,
+          mainImage: mainImageUrl,
+          headerImage: headerImageUrl,
+          otherImage: otherImageUrl,
+          ogImage: ogImageUrl,
+        };
+  
+        if (req.method === 'POST') {
+          const newPortfolio = new Portfolio(data);
+          await newPortfolio.save();
+          return res.status(201).json({ success: true, data: newPortfolio });
+        } else {
+          const updatedPortfolio = await Portfolio.findByIdAndUpdate(id, data, {
+            new: true,
+            runValidators: true,
+          });
+          if (!updatedPortfolio) return res.status(404).json({ message: 'Portfolio not found' });
+          return res.status(200).json({ success: true, data: updatedPortfolio });
         }
-
-        res.status(200).json({ success: true, data: updatedPortfolio });
+      } catch (error) {
+        console.error(`${req.method} error:`, error);
+        return res.status(500).json({
+          message: `Error ${req.method === 'POST' ? 'creating' : 'updating'} portfolio`,
+          error: error.message,
+        });
       }
-    } catch (error) {
-      console.error(`${req.method} error:`, error);
-      res.status(500).json({ message: `Error ${req.method === 'POST' ? 'creating' : 'updating'} portfolio`, error: error.message });
-    }
-
   } else if (req.method === 'DELETE') {
     try {
       const deletedPortfolio = await Portfolio.findByIdAndDelete(id);

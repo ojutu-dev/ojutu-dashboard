@@ -87,46 +87,71 @@ export default async function handler(req, res) {
     } catch (err) {
       res.status(500).json({ message: 'Fetch failed', error: err.message });
     }
-  } else if (req.method === 'PUT') {
+  } else  if (req.method === 'PUT') {
     try {
-      if (!id) return res.status(400).json({ message: 'Missing post ID' });
-
       const { fields, files } = await parseForm(req);
-      const { title, description, slug, body, authorId, categoryId } = fields;
+      const { id, title, description, slug, body, authorId, categoryId } = fields;
 
-      const featuredImageUrl = files.featuredImage
-        ? await uploadBuffer(files.featuredImage.buffer, 'ojutu', files.featuredImage.filename)
-        : undefined;
+      if (!id) {
+        return res.status(400).json({ message: 'Post ID is required for update' });
+      }
 
-      const headerImageUrl = files.headerImage
-        ? await uploadBuffer(files.headerImage.buffer, 'ojutu', files.headerImage.filename)
-        : undefined;
+      const post = await Post.findById(id);
+      if (!post) {
+        return res.status(404).json({ message: 'Post not found' });
+      }
 
-      const ogImageUrl = files.ogImage
-        ? await uploadBuffer(files.ogImage.buffer, 'ojutu', files.ogImage.filename)
-        : undefined;
+      // Update only provided text fields
+      if (title) post.title = title;
+      if (description) post.description = description;
+      if (slug) post.slug = slug;
+      if (body) post.body = body;
 
-      const updateFields = {
-        title, description, slug, body,
-        author: authorId,
-        category: categoryId,
-        ...(featuredImageUrl && { featuredImage: featuredImageUrl }),
-        ...(headerImageUrl && { headerImage: headerImageUrl }),
-        ...(ogImageUrl && { ogImage: ogImageUrl }),
-      };
+      if (authorId) {
+        const author = await Author.findById(authorId);
+        if (!author) return res.status(400).json({ message: 'Invalid author' });
+        post.author = authorId;
+      }
 
-      const updatedPost = await Post.findByIdAndUpdate(id, updateFields, {
-        new: true, runValidators: true
-      });
+      if (categoryId) {
+        const category = await Category.findById(categoryId);
+        if (!category) return res.status(400).json({ message: 'Invalid category' });
+        post.category = categoryId;
+      }
 
-      if (!updatedPost) return res.status(404).json({ message: 'Post not found' });
+      // Only update image if a new file is provided
+      if (files.featuredImage) {
+        post.featuredImage = await uploadBuffer(
+          files.featuredImage.buffer,
+          'ojutu',
+          files.featuredImage.filename
+        );
+      }
 
-      res.status(200).json({ success: true, data: updatedPost });
+      if (files.headerImage) {
+        post.headerImage = await uploadBuffer(
+          files.headerImage.buffer,
+          'ojutu',
+          files.headerImage.filename
+        );
+      }
+
+      if (files.ogImage) {
+        post.ogImage = await uploadBuffer(
+          files.ogImage.buffer,
+          'ojutu',
+          files.ogImage.filename
+        );
+      }
+
+      await post.save();
+      return res.status(200).json({ success: true, data: post });
     } catch (err) {
-      console.error('PUT error:', err);
-      res.status(500).json({ message: 'Update failed', error: err.message });
+      console.error('Update error:', err);
+      return res.status(500).json({ message: 'Failed to update post', error: err.message });
     }
   }
+
 
   else if (req.method === 'DELETE') {
     try {
