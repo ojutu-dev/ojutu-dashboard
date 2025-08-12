@@ -4,6 +4,7 @@ import initMiddleware from './init-middleware';
 const allowedOrigins = [
   'http://168.231.66.225:3010',
   'https://ojutu.co',
+  'https://www.ojutu.co',
   'http://localhost:3000',
   'http://localhost:3001',
 ];
