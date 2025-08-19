@@ -68,8 +68,9 @@ export default function DetailForm() {
     if (params.id && section) {
       const fetchPostData = async () => {
         try {
-          const response = await fetch(`/api/post?id=${params.id}`);
+          const response = await fetch(`/api/post/${params.id}`);
           const data = await response.json();
+          console.log(data)
           if (response.ok) {
             setFormData({
               title: data.title,
@@ -196,7 +197,7 @@ export default function DetailForm() {
     });
 
     try {
-      const url = isEditing ? `/api/post/${params.id}` : "/api/post";
+      const url = isEditing ? `/api/post?id=${params.id}` : "/api/post";
       const method = isEditing ? "PUT" : "POST";
 
       const response = await fetch(url, {

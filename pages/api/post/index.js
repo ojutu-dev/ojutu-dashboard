@@ -69,23 +69,42 @@ export default async function handler(req, res) {
     }
   } else if (req.method === 'GET') {
     try {
+      const { id, slug } = req.query; // make sure to destructure
+  
       let post;
-      if (slug) {
-        post = await Post.findOne({ slug }).populate('author', 'name email image').populate('category', 'title');
-      } else if (id) {
-        post = await Post.findById(id).populate('author', 'name email image').populate('category', 'title');
+  
+      if (id) {
+        // 🔹 Get by ID
+        post = await Post.findById(id)
+          .populate('author', 'name email image')
+          .populate('category', 'title');
+  
+        if (!post) return res.status(404).json({ message: 'Post not found' });
+        return res.status(200).json({ success: true, data: post });
+  
+      } else if (slug) {
+        // 🔹 Get by Slug
+        post = await Post.findOne({ slug })
+          .populate('author', 'name email image')
+          .populate('category', 'title');
+  
+        if (!post) return res.status(404).json({ message: 'Post not found' });
+        return res.status(200).json({ success: true, data: post });
+  
       } else {
-        const posts = await Post.find().populate('author', 'name email')
-        .populate('category', 'title')
-        .select('_id title slug description featuredImage createdAt')
-        .sort({ createdAt: -1 });
+        // 🔹 Get all posts
+        const posts = await Post.find()
+          .populate('author', 'name email')
+          .populate('category', 'title')
+          .select('_id title slug description featuredImage createdAt')
+          .sort({ createdAt: -1 });
+  
         return res.status(200).json({ success: true, count: posts.length, data: posts });
       }
-
-      if (!post) return res.status(404).json({ message: 'Post not found' });
-      res.status(200).json({ success: true, data: post });
+  
     } catch (err) {
-      res.status(500).json({ message: 'Fetch failed', error: err.message });
+      console.error("Error fetching posts:", err);
+      return res.status(500).json({ message: 'Fetch failed', error: err.message });
     }
   } else  if (req.method === 'PUT') {
     try {
