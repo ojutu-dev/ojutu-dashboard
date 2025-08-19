@@ -70,24 +70,28 @@ export default function DetailForm() {
         try {
           const response = await fetch(`/api/post/${params.id}`);
           const data = await response.json();
-          console.log(data)
+             
+         
+
           if (response.ok) {
             setFormData({
-              title: data.title,
-              slug: data.slug,
-              description: data.description,
-              categoryId: data.category?._id || "",
-              authorId: data.author?._id || "",
-              body: Array.isArray(data.body)
-                ? data.body.join("")
-                : data.body || "",
+              title: data?.data.title || "",
+              slug: data?.data.slug || "",
+              description: data?.data.description || "",
+              categoryId: data?.data.category?._id || "",
+              authorId: data?.data.author?._id || "",
+              body: Array.isArray(data?.data.body)
+                ? data?.data.body.join("")
+                : data?.data.body || "",
             });
+
+            
 
             // Set existing image URLs as previews
             setPreviews({
-              headerImage: data.headerImage || null,
-              featuredImage: data.featuredImage || null,
-              ogImage: data.ogImage || null,
+              headerImage: data?.data.headerImage || null,
+              featuredImage: data?.data.featuredImage || null,
+              ogImage: data?.data.ogImage || null,
             });
 
             setIsEditing(true);
@@ -99,6 +103,8 @@ export default function DetailForm() {
       fetchPostData();
     }
   }, [params.id, section]);
+
+ 
 
   // Fetch category and author options
   useEffect(() => {
@@ -195,6 +201,7 @@ export default function DetailForm() {
         formDataToSend.append(key, previews[key]);
       }
     });
+    
 
     try {
       const url = isEditing ? `/api/post?id=${params.id}` : "/api/post";
@@ -210,11 +217,12 @@ export default function DetailForm() {
         throw new Error(errorText || "Failed to save post");
       }
 
-      const result = await response.json();
+      const result = await response.json();    
+
       if (isEditing) {
-        updateItem(section, result.data._id, result.data);
+        updateItem(section, result._id, result);
       } else {
-        addItem(section, result.data);
+        addItem(section, result);
       }
       router.push(`/dashboard/${section}`);
     } catch (error) {

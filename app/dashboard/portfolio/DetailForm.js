@@ -70,6 +70,8 @@ export default function DetailForm() {
           const response = await fetch(`/api/portfolio/${params.id}`);
           const item = await response.json();
 
+          
+
           if (response.ok) {
             setFormData({
               title: item.title || "",
@@ -245,6 +247,7 @@ export default function DetailForm() {
       }
 
       const result = await response.json();
+     
       if (isEditing) {
         updateItem(section, result.data?.id, result.data);
       } else {
@@ -315,9 +318,7 @@ export default function DetailForm() {
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto p-4">
       <div className="mb-8">
         <h2 className="text-2xl font-bold">Portfolio:</h2>
-        {formData.title && (
-          <div className="text-lg font-bold">{formData.title}</div>
-        )}
+        {formData.title && <div className="text-lg font-bold">{formData.title}</div>}
       </div>
 
       <div className="grid grid-cols-1 gap-6">
