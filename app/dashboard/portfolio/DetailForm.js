@@ -233,7 +233,7 @@ export default function DetailForm() {
     });
 
     try {
-      const url = isEditing ? `/api/portfolio/${params.id}` : "/api/portfolio";
+      const url = isEditing ? `/api/portfolio?id=${params.id}` : "/api/portfolio";
       const method = isEditing ? "PUT" : "POST";
 
       const response = await fetch(url, {
