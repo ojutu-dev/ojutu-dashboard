@@ -211,6 +211,7 @@ export default function DetailForm() {
         method,
         body: formDataToSend,
       });
+      console.log(response)
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -220,7 +221,7 @@ export default function DetailForm() {
       const result = await response.json();    
 
       if (isEditing) {
-        updateItem(section, result.id, result);
+        updateItem(section, result?.id, result);
       } else {
         addItem(section, result);
       }

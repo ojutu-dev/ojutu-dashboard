@@ -19,6 +19,8 @@ export default async function handler(req, res) {
       res.status(500).json({ message: 'Error fetching post', error: error.message });
     }
   } else if (req.method === 'PUT') {
+    if (!id) return res.status(400).json({ message: "Post ID is required" });
+
     try {
       const { title, slug, description, featuredImage, headerImage, ogImage, body, authorId, categoryId } = req.body;
 
