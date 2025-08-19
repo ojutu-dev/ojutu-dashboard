@@ -68,7 +68,7 @@ export default function DetailForm() {
     if (params.id && section) {
       const fetchPostData = async () => {
         try {
-          const response = await fetch(`/api/post/${params.id}`);
+          const response = await fetch(`/api/post?id=${params.id}`);
           const data = await response.json();
              
          
@@ -211,6 +211,7 @@ export default function DetailForm() {
         method,
         body: formDataToSend,
       });
+      console.log(response)
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -220,7 +221,7 @@ export default function DetailForm() {
       const result = await response.json();    
 
       if (isEditing) {
-        updateItem(section, result._id, result);
+        updateItem(section, result?.id, result);
       } else {
         addItem(section, result);
       }

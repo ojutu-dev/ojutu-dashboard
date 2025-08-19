@@ -109,11 +109,11 @@ export default async function handler(req, res) {
   } else  if (req.method === 'PUT') {
     try {
       const { fields, files } = await parseForm(req);
-      const { id, title, description, slug, body, authorId, categoryId } = fields;
+      const { title, description, slug, body, authorId, categoryId } = fields;
 
-      if (!id) {
-        return res.status(400).json({ message: 'Post ID is required for update' });
-      }
+      // if (!id) {
+      //   return res.status(400).json({ message: 'Post ID is required for update' });
+      // }
 
       const post = await Post.findById(id);
       if (!post) {
