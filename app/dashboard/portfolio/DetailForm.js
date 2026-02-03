@@ -233,7 +233,7 @@ export default function DetailForm() {
     });
 
     try {
-      const url = isEditing ? `/api/portfolio/${params.id}` : "/api/portfolio";
+      const url = isEditing ? `/api/portfolio?id=${params.id}` : "/api/portfolio";
       const method = isEditing ? "PUT" : "POST";
 
       const response = await fetch(url, {
@@ -249,7 +249,7 @@ export default function DetailForm() {
       const result = await response.json();
      
       if (isEditing) {
-        updateItem(section, result.data._id, result.data);
+        updateItem(section, result.data?.id, result.data);
       } else {
         addItem(section, result.data);
       }

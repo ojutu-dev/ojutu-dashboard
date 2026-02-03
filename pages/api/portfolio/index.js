@@ -156,7 +156,6 @@ export default async function handler(req, res) {
   }
 }
 
-
 // export default async function handler(req, res) {
 //   await connectToMongoDB(process.env.MONGODB_URI);
 //   await cors(req, res);

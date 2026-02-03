@@ -204,13 +204,14 @@ export default function DetailForm() {
     
 
     try {
-      const url = isEditing ? `/api/post/${params.id}` : "/api/post";
+      const url = isEditing ? `/api/post?id=${params.id}` : "/api/post";
       const method = isEditing ? "PUT" : "POST";
 
       const response = await fetch(url, {
         method,
         body: formDataToSend,
       });
+      console.log(response)
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -220,7 +221,7 @@ export default function DetailForm() {
       const result = await response.json();    
 
       if (isEditing) {
-        updateItem(section, result._id, result);
+        updateItem(section, result?.id, result);
       } else {
         addItem(section, result);
       }
